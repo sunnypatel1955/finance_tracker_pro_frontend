@@ -40,7 +40,7 @@ body.light-mode {
 .sidebar {
     position: fixed;
     top: 0;
-    left: 0;
+    left: -280px; /* Hide by default */
     width: 280px;
     height: 100vh;
     background: rgba(15, 23, 42, 0.8);
@@ -52,7 +52,11 @@ body.light-mode {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    transition: width 0.3s ease;
+    transition: left 0.3s ease, width 0.3s ease;
+}
+
+.sidebar.active {
+    left: 0;
 }
 
 .light-mode .sidebar {
@@ -73,6 +77,25 @@ body.light-mode {
         width: 180px;
         padding: 12px;
     }
+}
+
+.sidebar-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 24px;
+    background: #0f172a;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    z-index: 1100;
+    cursor: pointer;
+}
+
+.light-mode .sidebar-toggle {
+    background: #f8fafc;
+    color: #0f172a;
 }
 
 
