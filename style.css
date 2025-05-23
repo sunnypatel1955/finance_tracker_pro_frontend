@@ -103,6 +103,14 @@ body.light-mode {
     color: white; /* or whatever color */
 }
 
+.main-content {
+  padding-top: 80px; /* space for header */
+  margin-left: 0;
+  padding-left: 24px;  /* optional, for some horizontal padding */
+  padding-right: 24px; /* optional */
+  transition: margin-left 0.3s ease;
+}
+
 .sidebar-active .main-content {
   margin-left: 304px; /* or match your sidebar width */
 }
