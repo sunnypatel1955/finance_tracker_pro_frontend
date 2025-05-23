@@ -625,8 +625,20 @@ async function changePassword() {
 }
 
 function toggleSidebar() {
-  document.querySelector('.sidebar').classList.toggle('active');
+  const sidebar = document.querySelector('.sidebar');
+  const mainContent = document.querySelector('.main-content');
+  
+  sidebar.classList.toggle('active');
+  
+  if (sidebar.classList.contains('active')) {
+    // Sidebar is shown, push main content right
+    mainContent.style.marginLeft = '304px';
+  } else {
+    // Sidebar hidden, main content full width
+    mainContent.style.marginLeft = '0';
+  }
 }
+
 
 function togglePassword(id) {
     const input = document.getElementById(id);
