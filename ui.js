@@ -626,17 +626,8 @@ async function changePassword() {
 
 function toggleSidebar() {
   const sidebar = document.querySelector('.sidebar');
-  const mainContent = document.querySelector('.main-content');
-  
   sidebar.classList.toggle('active');
-  
-  if (sidebar.classList.contains('active')) {
-    // Sidebar is shown, push main content right
-    mainContent.style.marginLeft = '304px';
-  } else {
-    // Sidebar hidden, main content full width
-    mainContent.style.marginLeft = '0';
-  }
+  document.body.classList.toggle('sidebar-active');
 }
 
 function togglePassword(id) {
