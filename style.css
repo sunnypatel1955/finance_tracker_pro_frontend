@@ -52,12 +52,29 @@ body.light-mode {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    transition: width 0.3s ease;
 }
 
 .light-mode .sidebar {
     background: rgba(248, 250, 252, 0.8);
     border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
+
+/* 📱 Responsive tweak */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 220px;
+        padding: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar {
+        width: 180px;
+        padding: 12px;
+    }
+}
+
 
 .main-content {
     margin-left: 304px;
