@@ -624,6 +624,10 @@ async function changePassword() {
     }    
 }
 
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('active');
+}
+
 function togglePassword(id) {
     const input = document.getElementById(id);
     const icon = input.nextElementSibling.querySelector('i');
