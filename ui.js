@@ -535,7 +535,7 @@ function logout() {
     localStorage.removeItem('token');
     
     showNotification('Logged out successfully', 'success');
-    setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
 }
 
 
