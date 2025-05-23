@@ -98,10 +98,13 @@ body.light-mode {
     color: #0f172a;
 }
 
+.finance-tracker-title {
+    margin-top: 60px; /* Push down so toggle button doesn't cover */
+    color: white; /* or whatever color */
+}
 
-.main-content {
-    margin-left: 304px;
-    padding: 24px;
+.sidebar-active .main-content {
+  margin-left: 304px; /* or match your sidebar width */
 }
 
 .container {
