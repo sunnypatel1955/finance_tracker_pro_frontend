@@ -174,15 +174,40 @@ function updateInsights() {
     bestWorstMonthCard.textContent += `\nWorst: ${formatDate(worstMonth.date)} (${formatCurrency(worstMonth.change)})`;
     const actionableInsightsCard = document.getElementById('actionableInsights');
     let insights = [];
-    if (avgGrowthRate > 0) insights.push(`Your net worth is growing at ${avgGrowthRate.toFixed(1)}% monthly. Keep up the good work!`);
-    else if (avgGrowthRate < 0) insights.push(`Your net worth is declining at ${Math.abs(avgGrowthRate).toFixed(1)}% monthly. Consider reviewing your expenses and investments.`);
-    if (volatilityPercentage > 20) insights.push('Your finances show high volatility. Consider diversifying your investments to reduce risk.');
-    if (bestMonth.change > 0 && worstMonth.change < 0) {
-        insights.push(`Your best month was ${formatDate(bestMonth.date)} with a gain of ${formatCurrency(bestMonth.change)}.`);
-        insights.push(`Your worst month was ${formatDate(worstMonth.date)} with a loss of ${formatCurrency(Math.abs(worstMonth.change))}.`);
-    }
-    if (insights.length === 0) insights.push('Add more monthly records to get personalized insights and recommendations.');
-    actionableInsightsCard.textContent = insights.join('\n\n');
+
+if (avgGrowthRate > 0) {
+    insights.push(`Your net worth is growing at ${avgGrowthRate.toFixed(1)}% monthly. Keep up the good work!`);
+} else if (avgGrowthRate < 0) {
+    insights.push(`Your net worth is declining at ${Math.abs(avgGrowthRate).toFixed(1)}% monthly. Consider reviewing your expenses and investments.`);
 }
-// calculations.js (at the end)
+if (volatilityPercentage > 20) {
+    insights.push('Your finances show high volatility. Consider diversifying your investments to reduce risk.');
+}
+if (bestMonth.change > 0 && worstMonth.change < 0) {
+    insights.push(`Your best month was ${formatDate(bestMonth.date)} with a gain of ${formatCurrency(bestMonth.change)}.`);
+    insights.push(`Your worst month was ${formatDate(worstMonth.date)} with a loss of ${formatCurrency(Math.abs(worstMonth.change))}.`);
+}
+let totalLoanEmi = data.expenses
+    .filter(expense => expense.category === 'Loan Installment')
+    .reduce((sum, expense) => sum + expense.value, 0);
+
+let totalIncome = data.income
+    .reduce((sum, income) => sum + income.value, 0);
+
+if (totalIncome > 0) {
+    let emiIncomeRatio = (totalLoanEmi / totalIncome) * 100;
+
+    if (emiIncomeRatio > 50) {
+        insights.push(`Your loan EMI consumes ${emiIncomeRatio.toFixed(1)}% of your monthly income. This is financially risky — consider reducing EMIs or restructuring loans.`);
+    } else if (emiIncomeRatio > 40) {
+        insights.push(`Your loan EMI is moderately high at ${emiIncomeRatio.toFixed(1)}% of your income. Monitor it closely to avoid future financial strain.`);
+    } else if (totalLoanEmi === 0) {
+        insights.push("Great! You have no active loan EMIs currently.");
+    }
+}
+if (insights.length === 0) {
+    insights.push('Add more monthly records to get personalized insights and recommendations.');
+}
+actionableInsightsCard.innerHTML = '<ul>' + insights.map(item => `<li>${item}</li>`).join('') + '</ul>';
+}
 window.update = update;
