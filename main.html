@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal Finance Tracker Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- External library scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/chart.js@4.4.2/dist/chart.umd.js" 
@@ -29,77 +29,144 @@
             };
             document.head.appendChild(script);
         }
+        
+        // Mouse tracking for background effect
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            document.documentElement.style.setProperty('--mouse-x', x + '%');
+            document.documentElement.style.setProperty('--mouse-y', y + '%');
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body class="dark-mode">
-    <div id="userName" style="position: absolute; top: 17px; right: 200px; color: #EF4444; font-weight: bold; font-family: 'Inter', sans-serif; z-index: 1000;"></div>
-    <!-- Dropdown Button -->
-    <div class="dropdown" style="position: absolute; top: 7px; right: 75px; z-index: 1000;">
-        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fas fa-user-circle"></i> Menu
+    <!-- Enhanced User Display -->
+    <div id="userName"></div>
+    
+    <!-- Enhanced User Menu Dropdown -->
+    <div class="dropdown">
+        <button class="btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-circle me-2"></i>Menu
         </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
-            <li><a class="dropdown-item" href="#" onclick="showChangePasswordModal()">Change Password</a></li>
-            <li><a class="dropdown-item" href="#" onclick="toggleDarkMode()">Toggle Dark Mode</a></li>
-            <li><a class="dropdown-item" href="#" onclick="logout()">Log Out</a></li>
+        <ul class="dropdown-menu" aria-labelledby="userMenuButton">
+            <li><a class="dropdown-item" href="#" onclick="showChangePasswordModal()">
+                <i class="fas fa-key me-2"></i>Change Password
+            </a></li>
+            <li><a class="dropdown-item" href="#" onclick="toggleDarkMode()">
+                <i class="fas fa-moon me-2"></i>Toggle Dark Mode
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-2"></i>Log Out
+            </a></li>
         </ul>
     </div>
-    <!-- Sidebar Toggle Button -->
-<button class="sidebar-toggle" onclick="toggleSidebar()">
-  ☰
-</button>
 
-<!-- Sidebar -->
-    <div class="sidebar">
-        <h5 class="finance-tracker-title">Finance Tracker Pro</h5>
-        <select class="form-select mb-2" id="currency" onchange="debouncedUpdate()">
-            <option value="INR" selected>INR (₹)</option>
-            <option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="GBP">GBP (£)</option>
-            <option value="CNY">CNY (¥)</option>
-            <option value="JPY">JPY (¥)</option>
-            <option value="AUD">AUD (A$)</option>
-            <option value="CAD">CAD (C$)</option>
-        </select>
-        <button class="btn btn-primary btn-sm mb-2 w-100" onclick="calculate()">Calculate Now</button>
-        <button class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="exportData()">Get Report</button>
-        <button class="btn btn-outline-info btn-sm mb-2 w-100" onclick="backupData()">Download Local Backup</button>
-        <button class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="importData()">Upload Local Backup</button>
-        <button class="btn btn-outline-danger btn-sm mb-2 w-100" onclick="resetData()">Reset All Data</button>
-        <button class="btn btn-outline-warning btn-sm mb-2 w-100" onclick="undoData()">Undo</button>
-        <button class="btn btn-outline-info btn-sm mb-2 w-100" onclick="saveMonthlyNetWorth()">Save Monthly Net Worth</button>
+    <!-- Enhanced Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Enhanced Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="finance-tracker-title">
+            <i class="fas fa-chart-line me-2"></i>Finance Tracker Pro
+        </div>
+        
+        <div class="sidebar-section">
+            <label class="form-label text-white-50 small text-uppercase fw-bold mb-2">Currency</label>
+            <select class="form-select mb-3" id="currency" onchange="debouncedUpdate()">
+                <option value="INR" selected>🇮🇳 INR (₹)</option>
+                <option value="USD">🇺🇸 USD ($)</option>
+                <option value="EUR">🇪🇺 EUR (€)</option>
+                <option value="GBP">🇬🇧 GBP (£)</option>
+                <option value="CNY">🇨🇳 CNY (¥)</option>
+                <option value="JPY">🇯🇵 JPY (¥)</option>
+                <option value="AUD">🇦🇺 AUD (A$)</option>
+                <option value="CAD">🇨🇦 CAD (C$)</option>
+            </select>
+        </div>
+
+        <div class="sidebar-section">
+            <label class="form-label text-white-50 small text-uppercase fw-bold mb-2">Quick Actions</label>
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary w-100" onclick="calculate()">
+                    <i class="fas fa-calculator me-2"></i>Calculate Now
+                </button>
+                <button class="btn btn-outline-secondary w-100" onclick="exportData()">
+                    <i class="fas fa-download me-2"></i>Get Report
+                </button>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <label class="form-label text-white-50 small text-uppercase fw-bold mb-2">Data Management</label>
+            <div class="d-grid gap-2">
+                <button class="btn btn-outline-info w-100" onclick="backupData()">
+                    <i class="fas fa-cloud-download-alt me-2"></i>Download Backup
+                </button>
+                <button class="btn btn-outline-secondary w-100" onclick="importData()">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload Backup
+                </button>
+                <button class="btn btn-outline-warning w-100" onclick="undoData()">
+                    <i class="fas fa-undo me-2"></i>Undo Changes
+                </button>
+                <button class="btn btn-outline-info w-100" onclick="saveMonthlyNetWorth()">
+                    <i class="fas fa-save me-2"></i>Save Monthly Record
+                </button>
+                <button class="btn btn-outline-danger w-100" onclick="resetData()">
+                    <i class="fas fa-trash-alt me-2"></i>Reset All Data
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="main-content">
-        <div class="container">
-            <div class="row g-5">
-                <!-- Overview -->
+        <div class="container-fluid">
+            <div class="row g-4">
+                <!-- Enhanced Overview Section -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header overview-header">
-                            <span><i class="fas fa-wallet me-2"></i>Overview</span>
-                            <button class="toggle-btn" onclick="toggleSection('overviewCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-wallet me-3"></i>
+                                <span class="fw-bold">Financial Overview</span>
+                            </div>
+                            <button class="toggle-btn" onclick="toggleSection('overviewCollapse')" title="Toggle Section">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
                         </div>
                         <div class="collapse show" id="overviewCollapse">
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label overview-label">Liquid Cash Available:</label>
-                                        <input type="number" class="form-control" id="initial_cash" placeholder="e.g., 5000" step="0.01" min="0" oninput="debouncedUpdate()">
+                                <div class="row g-4">
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="overview-metric">
+                                            <label class="form-label fw-semibold">💰 Liquid Cash Available</label>
+                                            <input type="number" class="form-control form-control-lg" id="initial_cash" 
+                                                   placeholder="e.g., 50,000" step="0.01" min="0" oninput="debouncedUpdate()">
+                                        </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label overview-label">Current Net Worth:</label>
-                                        <input type="text" class="form-control" id="netWorth" readonly value="0">
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="overview-metric">
+                                            <label class="form-label fw-semibold">📊 Current Net Worth</label>
+                                            <input type="text" class="form-control form-control-lg overview-display" 
+                                                   id="netWorth" readonly value="₹0">
+                                        </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label overview-label">Total Investments:</label>
-                                        <input type="text" class="form-control" id="totalInvestments" readonly value="0">
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="overview-metric">
+                                            <label class="form-label fw-semibold">📈 Total Investments</label>
+                                            <input type="text" class="form-control form-control-lg overview-display positive" 
+                                                   id="totalInvestments" readonly value="₹0">
+                                        </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label overview-label">Total Loans:</label>
-                                        <input type="text" class="form-control" id="totalLoans" readonly value="0">
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="overview-metric">
+                                            <label class="form-label fw-semibold">💳 Total Loans</label>
+                                            <input type="text" class="form-control form-control-lg overview-display negative" 
+                                                   id="totalLoans" readonly value="₹0">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -107,27 +174,34 @@
                     </div>
                 </div>
 
-                <!-- Investments -->
+                <!-- Enhanced Investments Section -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header investments">
-                            <span><i class="fas fa-chart-line me-2"></i>Investments</span>
-                            <div>
-                                <button class="btn btn-sm btn-primary" onclick="addRow('investments', event)">Add Investment</button>
-                                <button class="toggle-btn" onclick="toggleSection('investmentsCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chart-line me-3"></i>
+                                <span class="fw-bold">Investment Portfolio</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="addRow('investments', event)">
+                                    <i class="fas fa-plus me-1"></i>Add Investment
+                                </button>
+                                <button class="toggle-btn" onclick="toggleSection('investmentsCollapse')" title="Toggle Section">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="collapse show" id="investmentsCollapse">
-                            <div class="card-body table-container">
-                                <table class="table table-dark" id="investments">
+                            <div class="table-container">
+                                <table class="table" id="investments">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Value</th>
-                                            <th>Expected Return (%)</th>
-                                            <th>Risk Level</th>
-                                            <th>Remark</th>
-                                            <th></th>
+                                            <th><i class="fas fa-tag me-1"></i>Investment Name</th>
+                                            <th><i class="fas fa-money-bill-wave me-1"></i>Current Value</th>
+                                            <th><i class="fas fa-percentage me-1"></i>Expected Return (%)</th>
+                                            <th><i class="fas fa-shield-alt me-1"></i>Risk Level</th>
+                                            <th><i class="fas fa-comment me-1"></i>Notes</th>
+                                            <th><i class="fas fa-cog me-1"></i>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -137,26 +211,33 @@
                     </div>
                 </div>
 
-                <!-- Loans -->
+                <!-- Enhanced Loans Section -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header loans">
-                            <span><i class="fas fa-hand-holding-usd me-2"></i>Loans</span>
-                            <div>
-                                <button class="btn btn-sm btn-primary" onclick="addRow('loans', event)">Add Loan</button>
-                                <button class="toggle-btn" onclick="toggleSection('loansCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-hand-holding-usd me-3"></i>
+                                <span class="fw-bold">Loans & Liabilities</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="addRow('loans', event)">
+                                    <i class="fas fa-plus me-1"></i>Add Loan
+                                </button>
+                                <button class="toggle-btn" onclick="toggleSection('loansCollapse')" title="Toggle Section">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="collapse show" id="loansCollapse">
-                            <div class="card-body table-container">
-                                <table class="table table-dark loans" id="loans">
+                            <div class="table-container">
+                                <table class="table loans" id="loans">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Outstanding Amount</th>
-                                            <th>Annual Interest (%)</th>
-                                            <th>Remark</th>
-                                            <th></th>
+                                            <th><i class="fas fa-tag me-1"></i>Loan Name</th>
+                                            <th><i class="fas fa-money-bill-wave me-1"></i>Outstanding Amount</th>
+                                            <th><i class="fas fa-percentage me-1"></i>Annual Interest (%)</th>
+                                            <th><i class="fas fa-comment me-1"></i>Notes</th>
+                                            <th><i class="fas fa-cog me-1"></i>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -166,25 +247,32 @@
                     </div>
                 </div>
 
-                <!-- Income -->
+                <!-- Enhanced Income Section -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header income">
-                            <span><i class="fas fa-money-bill-wave me-2"></i>Income</span>
-                            <div>
-                                <button class="btn btn-sm btn-primary" onclick="addRow('income', event)">Add Income</button>
-                                <button class="toggle-btn" onclick="toggleSection('incomeCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-money-bill-wave me-3"></i>
+                                <span class="fw-bold">Income Sources</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="addRow('income', event)">
+                                    <i class="fas fa-plus me-1"></i>Add Income
+                                </button>
+                                <button class="toggle-btn" onclick="toggleSection('incomeCollapse')" title="Toggle Section">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="collapse show" id="incomeCollapse">
-                            <div class="card-body table-container">
-                                <table class="table table-dark" id="income">
+                            <div class="table-container">
+                                <table class="table" id="income">
                                     <thead>
                                         <tr>
-                                            <th>Source</th>
-                                            <th>Monthly Amount</th>
-                                            <th>Remark</th>
-                                            <th></th>
+                                            <th><i class="fas fa-source me-1"></i>Income Source</th>
+                                            <th><i class="fas fa-calendar-alt me-1"></i>Monthly Amount</th>
+                                            <th><i class="fas fa-comment me-1"></i>Notes</th>
+                                            <th><i class="fas fa-cog me-1"></i>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -194,26 +282,33 @@
                     </div>
                 </div>
 
-                <!-- Expenses -->
+                <!-- Enhanced Expenses Section -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header expenses">
-                            <span><i class="fas fa-shopping-cart me-2"></i>Expenses</span>
-                            <div>
-                                <button class="btn btn-sm btn-primary" onclick="addRow('expenses', event)">Add Expense</button>
-                                <button class="toggle-btn" onclick="toggleSection('expensesCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-shopping-cart me-3"></i>
+                                <span class="fw-bold">Monthly Expenses</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="addRow('expenses', event)">
+                                    <i class="fas fa-plus me-1"></i>Add Expense
+                                </button>
+                                <button class="toggle-btn" onclick="toggleSection('expensesCollapse')" title="Toggle Section">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="collapse show" id="expensesCollapse">
-                            <div class="card-body table-container">
-                                <table class="table table-dark expenses" id="expenses">
+                            <div class="table-container">
+                                <table class="table expenses" id="expenses">
                                     <thead>
                                         <tr>
-                                            <th>Category</th>
-                                            <th>Type</th>
-                                            <th>Monthly Amount</th>
-                                            <th>Remark</th>
-                                            <th></th>
+                                            <th><i class="fas fa-tags me-1"></i>Category</th>
+                                            <th><i class="fas fa-layer-group me-1"></i>Type</th>
+                                            <th><i class="fas fa-calendar-alt me-1"></i>Monthly Amount</th>
+                                            <th><i class="fas fa-comment me-1"></i>Notes</th>
+                                            <th><i class="fas fa-cog me-1"></i>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -223,26 +318,33 @@
                     </div>
                 </div>
 
-                <!-- Financial Goals -->
+                <!-- Enhanced Financial Goals Section -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <span><i class="fas fa-bullseye me-2"></i>Financial Goals</span>
-                            <div>
-                                <button class="btn btn-sm btn-primary" onclick="addGoal(event)">Add Goal</button>
-                                <button class="toggle-btn" onclick="toggleSection('goalsCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-bullseye me-3"></i>
+                                <span class="fw-bold">Financial Goals & Targets</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="addGoal(event)">
+                                    <i class="fas fa-plus me-1"></i>Add Goal
+                                </button>
+                                <button class="toggle-btn" onclick="toggleSection('goalsCollapse')" title="Toggle Section">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="collapse show" id="goalsCollapse">
-                            <div class="card-body table-container">
-                                <table class="table table-dark" id="goals">
+                            <div class="table-container">
+                                <table class="table" id="goals">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Net Worth Target</th>
-                                            <th>Time to Achieve</th>
-                                            <th>Progress</th>
-                                            <th></th>
+                                            <th><i class="fas fa-target me-1"></i>Goal Name</th>
+                                            <th><i class="fas fa-money-bill-wave me-1"></i>Target Net Worth</th>
+                                            <th><i class="fas fa-clock me-1"></i>Time to Achieve</th>
+                                            <th><i class="fas fa-chart-line me-1"></i>Progress</th>
+                                            <th><i class="fas fa-cog me-1"></i>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -252,85 +354,119 @@
                     </div>
                 </div>
 
-                <!-- Visualization -->
+                <!-- Enhanced Visualization Header -->
                 <div class="col-12">
-                    <h2 style="font-family: 'Inter', sans-serif; font-weight: 700; color: var(--secondary-color);"><i class="fas fa-chart-bar me-2"></i>Visualization</h2>
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-chart-bar me-3"></i>
+                            Data Visualization & Analytics
+                        </h2>
+                        <p class="section-subtitle">Visual insights into your financial data</p>
+                    </div>
                 </div>
 
-                <div class="col-12">
+                <!-- Enhanced Investment Distribution Chart -->
+                <div class="col-xl-6 col-lg-12">
                     <div class="card">
                         <div class="card-header">
-                            <span><i class="fas fa-chart-pie me-2"></i>Investment Distribution</span>
-                            <button class="toggle-btn" onclick="toggleSection('investmentChartCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chart-pie me-3"></i>
+                                <span class="fw-bold">Investment Distribution</span>
+                            </div>
+                            <button class="toggle-btn" onclick="toggleSection('investmentChartCollapse')" title="Toggle Chart">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
                         </div>
                         <div class="collapse show" id="investmentChartCollapse">
-                            <div class="card-body chart-container">
+                            <div class="chart-container">
                                 <canvas id="investmentChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12">
+                <!-- Enhanced Risk vs Return Chart -->
+                <div class="col-xl-6 col-lg-12">
                     <div class="card">
                         <div class="card-header">
-                            <span><i class="fas fa-exclamation-triangle me-2"></i>Risk vs Return</span>
-                            <button class="toggle-btn" onclick="toggleSection('riskChartCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle me-3"></i>
+                                <span class="fw-bold">Risk vs Return Analysis</span>
+                            </div>
+                            <button class="toggle-btn" onclick="toggleSection('riskChartCollapse')" title="Toggle Chart">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
                         </div>
                         <div class="collapse show" id="riskChartCollapse">
-                            <div class="card-body chart-container">
+                            <div class="chart-container">
                                 <canvas id="riskChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Enhanced Net Worth Over Time Chart -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <span><i class="fas fa-chart-area me-2"></i>Net Worth Over Time</span>
-                            <button class="toggle-btn" onclick="toggleSection('progressChartCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chart-area me-3"></i>
+                                <span class="fw-bold">Net Worth Growth Timeline</span>
+                            </div>
+                            <button class="toggle-btn" onclick="toggleSection('progressChartCollapse')" title="Toggle Chart">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
                         </div>
                         <div class="collapse show" id="progressChartCollapse">
-                            <div class="card-body chart-container">
+                            <div class="chart-container">
                                 <canvas id="progressChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Historical Net Worth Timeline Graph -->
+                <!-- Enhanced Historical Net Worth Timeline Graph -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <span><i class="fas fa-history me-2"></i>Historical Net Worth Timeline</span>
-                            <button class="toggle-btn" onclick="toggleSection('historicalChartCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-history me-3"></i>
+                                <span class="fw-bold">Historical Net Worth Timeline</span>
+                            </div>
+                            <button class="toggle-btn" onclick="toggleSection('historicalChartCollapse')" title="Toggle Chart">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
                         </div>
                         <div class="collapse show" id="historicalChartCollapse">
-                            <div class="card-body chart-container">
+                            <div class="chart-container">
                                 <canvas id="historicalChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Monthly Records Table -->
+                <!-- Enhanced Monthly Records Table -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <span><i class="fas fa-table me-2"></i>Monthly Records</span>
-                            <button class="toggle-btn" onclick="toggleSection('monthlyRecordsCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-table me-3"></i>
+                                <span class="fw-bold">Monthly Financial Records</span>
+                            </div>
+                            <button class="toggle-btn" onclick="toggleSection('monthlyRecordsCollapse')" title="Toggle Section">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
                         </div>
                         <div class="collapse show" id="monthlyRecordsCollapse">
-                            <div class="card-body table-container">
-                                <table class="table table-dark" id="monthlyRecords">
+                            <div class="table-container">
+                                <table class="table" id="monthlyRecords">
                                     <thead>
                                         <tr>
-                                            <th>Month</th>
-                                            <th>Net Worth</th>
-                                            <th>Change</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
+                                            <th><i class="fas fa-calendar me-1"></i>Month</th>
+                                            <th><i class="fas fa-money-bill-wave me-1"></i>Net Worth</th>
+                                            <th><i class="fas fa-exchange-alt me-1"></i>Change</th>
+                                            <th><i class="fas fa-info-circle me-1"></i>Status</th>
+                                            <th><i class="fas fa-cog me-1"></i>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -340,166 +476,54 @@
                     </div>
                 </div>
 
-                <!-- Monthly Details Modal -->
-                <div class="modal fade" id="monthlyDetailsModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Monthly Details</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6>Overview</h6>
-                                        <table class="table table-sm">
-                                            <tr>
-                                                <td>Net Worth:</td>
-                                                <td id="modalNetWorth">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Monthly Change:</td>
-                                                <td id="modalChange">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Date:</td>
-                                                <td id="modalDate">-</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <h6>Breakdown</h6>
-                                        <table class="table table-sm">
-                                            <tr>
-                                                <td>Cash:</td>
-                                                <td id="modalCash">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Total Investments:</td>
-                                                <td id="modalInvestments">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Total Loans:</td>
-                                                <td id="modalLoans">-</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="row mt-3">
-                                    <div class="col-12">
-                                        <h6>Monthly Summary</h6>
-                                        <table class="table table-sm">
-                                            <tr>
-                                                <td>Total Income:</td>
-                                                <td id="modalIncome">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Total Expenses:</td>
-                                                <td id="modalExpenses">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Net Savings:</td>
-                                                <td id="modalSavings">-</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Change Password Modal -->
-                <div class="modal fade" id="changePasswordModal" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Change Password</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="currentPassword" class="form-label">Current Password</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password" required>
-                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('currentPassword')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="newPassword" class="form-label">New Password</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="newPassword" placeholder="Enter new password" required>
-                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newPassword')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="confirmNewPassword" placeholder="Confirm new password" required>
-                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmNewPassword')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" onclick="changePassword()">Change Password</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Insights Section -->
+                <!-- Enhanced Financial Insights Section -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <span><i class="fas fa-lightbulb me-2"></i>Financial Insights</span>
-                            <button class="toggle-btn" onclick="toggleSection('insightsCollapse')">-</button>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-lightbulb me-3"></i>
+                                <span class="fw-bold">AI-Powered Financial Insights</span>
+                            </div>
+                            <button class="toggle-btn" onclick="toggleSection('insightsCollapse')" title="Toggle Section">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
                         </div>
                         <div class="collapse show" id="insightsCollapse">
                             <div class="card-body">
                                 <div class="row g-4">
                                     <!-- Growth Rate Card -->
-                                    <div class="col-md-4">
+                                    <div class="col-lg-4 col-md-6">
                                         <div class="insight-card">
                                             <div class="insight-icon">
                                                 <i class="fas fa-chart-line"></i>
                                             </div>
                                             <div class="insight-content">
                                                 <h5>Monthly Growth Rate</h5>
-                                                <p id="growthRate">Calculating...</p>
+                                                <p id="growthRate">Analyzing your financial growth patterns...</p>
                                             </div>
                                         </div>
                                     </div>
                                     <!-- Volatility Card -->
-                                    <div class="col-md-4">
+                                    <div class="col-lg-4 col-md-6">
                                         <div class="insight-card">
                                             <div class="insight-icon">
                                                 <i class="fas fa-wave-square"></i>
                                             </div>
                                             <div class="insight-content">
                                                 <h5>Financial Stability</h5>
-                                                <p id="volatility">Calculating...</p>
+                                                <p id="volatility">Calculating portfolio stability metrics...</p>
                                             </div>
                                         </div>
                                     </div>
                                     <!-- Best/Worst Month Card -->
-                                    <div class="col-md-4">
+                                    <div class="col-lg-4 col-md-12">
                                         <div class="insight-card">
                                             <div class="insight-icon">
                                                 <i class="fas fa-calendar-alt"></i>
                                             </div>
                                             <div class="insight-content">
-                                                <h5>Best & Worst Months</h5>
-                                                <p id="bestWorstMonth">Calculating...</p>
+                                                <h5>Performance Highlights</h5>
+                                                <p id="bestWorstMonth">Identifying your best and worst performing periods...</p>
                                             </div>
                                         </div>
                                     </div>
@@ -507,11 +531,11 @@
                                     <div class="col-12">
                                         <div class="insight-card actionable">
                                             <div class="insight-icon">
-                                                <i class="fas fa-lightbulb"></i>
+                                                <i class="fas fa-brain"></i>
                                             </div>
                                             <div class="insight-content">
-                                                <h5>Actionable Insights</h5>
-                                                <p id="actionableInsights">Calculating...</p>
+                                                <h5>Actionable Recommendations</h5>
+                                                <p id="actionableInsights">Generating personalized financial recommendations based on your data...</p>
                                             </div>
                                         </div>
                                     </div>
@@ -523,32 +547,74 @@
 
             </div>
 
-            <div class="error text-danger mt-3 text-center" id="error-message"></div>
+            <!-- Error Message Display -->
+            <div class="error text-danger mt-4 text-center" id="error-message"></div>
         </div>
     </div>
 
-    <!-- Export Modal -->
-    <div class="modal fade" id="exportModal" tabindex="-1">
-        <div class="modal-dialog">
+    <!-- Enhanced Monthly Details Modal -->
+     <div class="modal fade" id="monthlyDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Export Data</h5>
+                    <h5 class="modal-title">Monthly Details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary" onclick="exportToExcel()">
-                            <i class="fas fa-file-excel me-2"></i>Export to Excel
-                        </button>
-                        <button class="btn btn-success" onclick="exportToCSV()">
-                            <i class="fas fa-file-csv me-2"></i>Export to CSV
-                        </button>
-                        <button class="btn btn-info" onclick="exportToPDF()">
-                            <i class="fas fa-file-pdf me-2"></i>Export to PDF
-                        </button>
-                        <button class="btn btn-secondary" onclick="exportToJSON()">
-                            <i class="fas fa-file-code me-2"></i>Export to JSON
-                        </button>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Overview</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Net Worth:</td>
+                                    <td id="modalNetWorth">-</td>
+                                </tr>
+                                <tr>
+                                    <td>Monthly Change:</td>
+                                    <td id="modalChange">-</td>
+                                </tr>
+                                <tr>
+                                    <td>Date:</td>
+                                    <td id="modalDate">-</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Breakdown</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Cash:</td>
+                                    <td id="modalCash">-</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Investments:</td>
+                                    <td id="modalInvestments">-</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Loans:</td>
+                                    <td id="modalLoans">-</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Monthly Summary</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Total Income:</td>
+                                    <td id="modalIncome">-</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Expenses:</td>
+                                    <td id="modalExpenses">-</td>
+                                </tr>
+                                <tr>
+                                    <td>Net Savings:</td>
+                                    <td id="modalSavings">-</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -557,58 +623,97 @@
             </div>
         </div>
     </div>
-    
-    <!-- Cookie Consent Popup -->
-    <div class="cookie-consent" id="cookieConsent">
-        <p>We use cookies to store your financial data locally and improve your experience. You can accept, decline, or customize your preferences.</p>
-        <div class="cookie-consent-buttons">
-            <button class="btn-customize" onclick="showCookieSettings()">Customize</button>
-            <button class="btn-decline" onclick="declineCookies()">Decline</button>
-            <button class="btn-accept" onclick="acceptCookies()">Accept</button>
-        </div>
-    </div>
-
-    <!-- Cookie Settings Modal -->
-    <div class="modal fade" id="cookieSettingsModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Cookie Settings</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <h6>Necessary Cookies</h6>
-                        <p>These cookies are essential for storing your financial data locally.</p>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="necessaryCookies" checked disabled>
-                            <label class="form-check-label" for="necessaryCookies">
-                                Necessary (Always Active)
-                            </label>
-                        </div>
+      
+        <!-- Change Password Modal -->
+        <div class="modal fade" id="changePasswordModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="mb-3">
-                        <h6>Analytics Cookies</h6>
-                        <p>These cookies help us understand how you use the tracker.</p>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="analyticsCookies">
-                            <label class="form-check-label" for="analyticsCookies">
-                                Analytics
-                            </label>
-                        </div>
+                    <div class="modal-body">
+                        <form id="changePasswordForm">
+                            <div class="mb-3">
+                                <label for="currentPassword" class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="newPassword" required minlength="6">
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                            </div>
+                        </form>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveCookieSettings()">Save Settings</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="changePassword()">
+                            <i class="fas fa-save me-1"></i>Update Password
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+    
+ <!-- Cookie Consent Popup -->
+ <div class="cookie-consent" id="cookieConsent">
+    <p>We use cookies to store your financial data locally and improve your experience. You can accept, decline, or customize your preferences.</p>
+    <div class="cookie-consent-buttons">
+        <button class="btn-customize" onclick="showCookieSettings()">Customize</button>
+        <button class="btn-decline" onclick="declineCookies()">Decline</button>
+        <button class="btn-accept" onclick="acceptCookies()">Accept</button>
     </div>
-    <script src="data.js"></script>
-    <script src="charts.js"></script>
-    <script src="calculations.js"></script>
-    <script src="ui.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+</div>
+
+<!-- Cookie Settings Modal -->
+<div class="modal fade" id="cookieSettingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cookie Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <h6>Necessary Cookies</h6>
+                    <p>These cookies are essential for storing your financial data locally.</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="necessaryCookies" checked disabled>
+                        <label class="form-check-label" for="necessaryCookies">
+                            Necessary (Always Active)
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6>Analytics Cookies</h6>
+                    <p>These cookies help us understand how you use the tracker.</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="analyticsCookies">
+                        <label class="form-check-label" for="analyticsCookies">
+                            Analytics
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCookieSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Hidden file input for data import -->
+        <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+        <script src="data.js"></script>
+        <script src="charts.js"></script>
+        <script src="calculations.js"></script>
+        <script src="ui.js"></script>
+        <script src="script.js"></script>
+    </body>
+    </html>
