@@ -7,12 +7,53 @@ function initCharts() {
         progress: document.getElementById('progressChart'),
         historical: document.getElementById('historicalChart')
     };
-    if (canvases.investment) {
+     if (canvases.investment) {
         charts.investment = new Chart(canvases.investment.getContext('2d'), {
-            type: 'pie',
-            data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderColor: [], borderWidth: 2 }] },
-            options: { responsive: true, maintainAspectRatio: false, layout: { padding: 40 }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => `${context.label}: ${formatCurrency(context.raw)}` } }, datalabels: { formatter: (value, context) => { const total = context.dataset.data.reduce((sum, val) => sum + val, 0); return total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%'; }, color: context => document.body.classList.contains('dark-mode') ? '#FFFFFF' : '#212121', anchor: 'end', align: 'end', offset: 10, font: { size: 12, weight: 'bold' }, textAlign: 'center', labels: { value: { borderColor: context => document.body.classList.contains('dark-mode') ? '#FFFFFF' : '#212121', borderWidth: 1, borderDash: [2, 2] } } } } },
-            plugins: [ChartDataLabels]
+            type: 'doughnut',
+            data: { 
+                labels: [], 
+                datasets: [{ 
+                    data: [], 
+                    backgroundColor: [], 
+                    borderColor: [], 
+                    borderWidth: 2,
+                    hoverBorderWidth: 3,
+                    hoverOffset: 8
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                layout: { padding: 20 }, 
+                plugins: { 
+                    legend: { 
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            font: { size: 12 }
+                        }
+                    }, 
+                    tooltip: { 
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        callbacks: { 
+                            label: context => {
+                                const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : '0';
+                                return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1000
+                }
+            }
         });
     }
     if (canvases.risk) {
