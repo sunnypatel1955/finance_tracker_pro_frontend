@@ -481,17 +481,23 @@ body.light-mode {
 }
 
 /* Simplified Cookie Consent */
+/* Updated Cookie Consent */
 .cookie-consent {
     position: fixed;
     bottom: 1.5rem;
     left: 1.5rem;
     right: 1.5rem;
     max-width: 450px;
-    background: var(--glass-bg);
+    background: #24243e; /* Solid dark background for dark mode */
     border-radius: 16px;
     padding: 1.5rem;
-    z-index: 3000;
+    z-index: 5500; /* Matches previous hierarchy */
     border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow); /* Retain shadow for depth */
+}
+
+body.light-mode .cookie-consent {
+    background: #f8fafc; /* Solid light background for light mode */
 }
 
 .cookie-consent p {
