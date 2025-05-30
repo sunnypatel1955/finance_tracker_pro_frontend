@@ -6,532 +6,863 @@
     <title>Login - Personal Finance Tracker Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
         :root {
-            --primary-color: #6366F1;
-            --secondary-color: #3B82F6;
-            --bg-dark: #0F172A;
-            --bg-light: #F8FAFC;
-            --radius: 16px;
-            --blur: 16px;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --success-gradient: linear-gradient(135deg, #81ffef 0%, #10d164 100%);
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #4facfe;
+            --success-color: #10d164;
+            --error-color: #ff6b6b;
+            --warning-color: #feca57;
+            --bg-light: #f8fafc;
+            --bg-light-secondary: #e2e8f0;
+            --text-dark: #1a202c;
+            --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --blur-intense: 20px;
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
+
         * {
-            font-family: "Inter", sans-serif;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            box-sizing: border-box;
         }
+
         body {
-            background: var(--bg-dark);
             margin: 0;
             padding: 0;
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            color: white;
-           background-image: url('/finance_tracker_pro_frontend/public/images/background5.jpg');
-
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }
-        body.light-mode {
             background: var(--bg-light);
-            color: #111827;
-            background-image: url('/finance_tracker_pro_frontend/public/images/background6.jpg');
+            color: var(--text-dark);
+            transition: var(--transition-smooth);
+            overflow-x: hidden;
+            position: relative;
+        }
 
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/finance_tracker_pro_frontend/public/images/background6.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-attachment: fixed;
+            z-index: -2;
+            opacity: 0.9;
+            transition: var(--transition-smooth);
         }
-        .auth-container {
-            background: rgba(255 255 255 / 0.06);
-            border-radius: var(--radius);
-            box-shadow:
-                0 0 0 1px rgb(255 255 255 / 0.1),
-                0 0 0 3px rgb(255 255 255 / 0.07),
-                0 0 20px 5px rgb(255 255 255 / 0.02);
-            backdrop-filter: blur(var(--blur));
-            -webkit-backdrop-filter: blur(var(--blur));
-            padding: 2rem;
-            max-width: 420px;
+ 
+
+        @keyframes float {
+            0%, 100% { 
+                transform: translate(0, 100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+        }
+
+        .split-container {
+            display: flex;
+            flex-direction: row;
             width: 100%;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            min-height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        body.light-mode .auth-container {
-            background: rgba(0 0 0 / 0.06);
-            box-shadow:
-                0 0 0 1px rgb(0 0 0 / 0.1),
-                0 0 0 3px rgb(0 0 0 / 0.07),
-                0 0 20px 5px rgb(0 0 0 / 0.02);
-            color: #111827;
+
+        .left-section {
+            flex: 1;
+            height: 70%;
+            margin: 7% 3% 3% 3%;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem;
+            background: var(--glass-bg);
+            border-right: 1px solid var(--glass-border);
+            backdrop-filter: blur(var(--blur-intense));
+            -webkit-backdrop-filter: blur(var(--blur-intense));
+            box-shadow: var(--glass-shadow);
+            animation: slideInLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .auth-card {
-            background: transparent;
-            color: inherit;
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
-        .auth-header {
-            font-weight: 700;
-            font-size: 1.6rem;
+
+        .right-section {
+            flex: 1;
+            height: 70%;
+            margin: 7% 3% 3% 3%;          
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-intense));
+            -webkit-backdrop-filter: blur(var(--blur-intense));
+            box-shadow: var(--glass-shadow);
+            animation: slideInRight 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .app-info {
+            text-align: left;
+        }
+
+        .app-logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 1rem;
+        }
+
+        .app-tagline {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .features-section {
+            margin-top: 2rem;
+        }
+
+        .features-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: #ff0202f4;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .features-list li {
             display: flex;
             align-items: center;
-            color: var(--primary-color);
-            user-select: none;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-smooth);
         }
-        body.light-mode .auth-header {
-            color: var(--secondary-color);
+
+        .features-list li:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
         }
-        .input-group-text {
-            background: rgba(255 255 255 / 0.15);
-            border: none;
-            color: var(--primary-color);
-            width: 38px;
-            justify-content: center;
-            user-select: none;
-        }
-        body.light-mode .input-group-text {
-            background: rgba(0 0 0 / 0.15);
-            color: var(--secondary-color);
-        }
-        .form-control {
-            background: rgba(255 255 255 / 0.1);
-            border: none;
-            color: white;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        body.light-mode .form-control {
-            background: rgba(0 0 0 / 0.1);
-            color: #111827;
-        }
-        /* NEW: Focus state override for both modes */
-        .form-control:focus {
-            background-color: #fff !important;
-            color: #000 !important;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-            outline: none;
-        }
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            width: 100%;
-            font-weight: 600;
+
+        .features-list i {
+            color: var(--success-color);
+            margin-right: 0.75rem;
             font-size: 1.1rem;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
+
+        .features-cta {
+            margin-top: 1.5rem;
+            font-weight: 600;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: #900000;
+            background-clip: text;
+        }
+
+        .auth-container {
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            max-width: 480px;
+            width: 100%;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--primary-gradient);
+            opacity: 0.6;
+        }
+
+        .auth-header {
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 5px rgba(102, 126, 234, 0.5)); }
+            to { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.8)); }
+        }
+
+        .auth-header i {
+            margin-right: 0.75rem;
+            font-size: 1.8rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .input-group-text {
+            background: rgba(0, 0, 0, 0.05);
+            border: none;
+            color: var(--primary-color);
+            width: 50px;
+            justify-content: center;
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+            transition: var(--transition-smooth);
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--text-dark);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: var(--text-dark) !important;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            outline: none;
+            transform: translateY(-2px);
+        }
+
+        .form-control:focus + .input-group-text,
+        .input-group-text:has(+ .form-control:focus) {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition-bounce);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
         .btn-primary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
+
+        .btn-outline-secondary {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            color: var(--text-dark);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-outline-secondary:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text-dark);
+            transform: scale(1.05);
+        }
+
         .btn-link {
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--secondary-color);
-            text-decoration: underline;
-            user-select: none;
-        }
-        .btn-link:hover,
-        .btn-link:focus {
             color: var(--primary-color);
-            outline: none;
+            font-weight: 700;
+            text-decoration: none;
+            position: relative;
+            transition: var(--transition-smooth);
         }
-        .toggle-mode {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            cursor: pointer;
-            z-index: 1000;
-            transition: color 0.3s ease;
-            user-select: none;
+
+        .btn-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            transition: var(--transition-smooth);
         }
-        body.light-mode .toggle-mode {
+
+        .btn-link:hover {
             color: var(--secondary-color);
+            transform: translateY(-1px);
         }
-        /* Notification styles */
+
+        .btn-link:hover::after {
+            width: 100%;
+        }
+
         .notification {
             position: fixed;
-            top: 16px;
+            top: 2rem;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
             color: white;
             font-weight: 600;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            opacity: 1;
-            transition: opacity 0.5s ease;
-            user-select: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
             z-index: 1100;
-            pointer-events: none;
+            opacity: 0;
+            animation: slideDown 0.5s ease-out forwards;
             max-width: 90vw;
             text-align: center;
         }
-        .notification.success {
-            background-color: #22c55e;
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
         }
+
+        .notification.success {
+            background: var(--success-gradient);
+        }
+
         .notification.error {
-            background-color: #ef4444;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .switch-card-animation {
+            animation: cardFlip 0.6s ease-in-out;
+        }
+
+        @keyframes cardFlip {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        @media (max-width: 768px) {
+            .split-container {
+                flex-direction: column;
+            }
+
+            .left-section {
+                padding: 2rem 1.5rem;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+            }
+
+            .right-section {
+                padding: 2rem 1.5rem;
+            }
+
+            .auth-container {
+                margin: 0;
+                padding: 1.5rem;
+            }
+
+            .auth-header {
+                font-size: 1.6rem;
+            }
+
+            .app-logo {
+                font-size: 2rem;
+            }
+
+            .app-tagline {
+                font-size: 1rem;
+            }
+        }
+
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <button class="toggle-mode" aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
-        <i class="fas fa-moon"></i>
-    </button>
-
-    <main class="auth-container" novalidate>
-
-       <!-- Features Teaser -->
-<div class="mb-4 text-center" id="featuresTeaser">
-    <h2 style="font-size: 1.4rem; font-weight: 600; color: var(--primary-color);">Why Finance Tracker Pro?</h2>
-    <ul class="list-unstyled mt-3 mb-1 small" style="line-height: 1.6;">
-      <li><i class="fas fa-check-circle text-success me-2"></i> Track your investments, loans, income, expenses & savings effortlessly</li>
-      <li><i class="fas fa-check-circle text-success me-2"></i> Get smart visual insights & analytics</li>
-      <li><i class="fas fa-check-circle text-success me-2"></i> Track your net worth & grow your wealth</li>
-      <li><i class="fas fa-check-circle text-success me-2"></i> Access anywhere with cloud sync</li>
-    </ul>
-    <p class="small mt-2" style="opacity: 0.8; font-weight: bold;">Join hundreds of smart users simplifying their finances 🚀</p>
-  </div>
-  
-             
-        <!-- Login Card -->
-        <section class="auth-card" id="loginCard" role="form" aria-label="Login form" tabindex="-1">
-            <header class="auth-header">
-                <i class="fas fa-sign-in-alt me-2" aria-hidden="true"></i> Login
-            </header>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="loginEmail" class="form-label">Email</label>
-                    <div class="input-group">
-                        <span class="input-group-text" aria-hidden="true"><i class="fas fa-envelope"></i></span>
-                        <input
-                            type="email"
-                            class="form-control"
-                            id="loginEmail"
-                            placeholder="Enter email"
-                            required
-                            autocomplete="username"
-                            aria-required="true"
-                        />
-                    </div>
+    <div class="split-container">
+        <section class="left-section">
+            <div class="app-info">
+                <h1 class="app-logo">Finance Tracker Pro</h1>
+                <p class="app-tagline">Simplify your finances, amplify your wealth.</p>
+                <div class="features-section" id="featuresTeaser">
+                    <h2 class="features-title">Why Finance Tracker Pro?</h2>
+                    <ul class="features-list">
+                        <li><i class="fas fa-chart-line"></i> Track investments, loans, income, expenses & savings effortlessly</li>
+                        <li><i class="fas fa-chart-pie"></i> Get smart visual insights & analytics</li>
+                        <li><i class="fas fa-trophy"></i> Track your net worth & grow your wealth</li>
+                        <li><i class="fas fa-cloud"></i> Access anywhere with cloud sync</li>
+                    </ul>
+                    <p class="features-cta">Join hundreds of smart users simplifying their finances.</p>
                 </div>
-                <div class="mb-3">
-                    <label for="loginPassword" class="form-label">Password</label>
-                    <div class="input-group">
-                        <input
-                            type="password"
-                            class="form-control"
-                            id="loginPassword"
-                            placeholder="Enter password"
-                            required
-                            autocomplete="current-password"
-                            aria-required="true"
-                        />
-                        <button
-                            class="btn btn-outline-secondary"
-                            type="button"
-                            onclick="togglePassword('loginPassword')"
-                            aria-label="Toggle password visibility"
-                        >
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <button class="btn btn-primary mb-3" id="loginBtn" onclick="handleLogin()" type="button" aria-live="polite" aria-atomic="true">
-                    <i class="fas fa-sign-in-alt me-2" aria-hidden="true"></i> Login
-                </button>
-                <p class="text-center mb-0">
-                    Don't have an account?
-                    <a href="#" class="btn-link" onclick="showRegister()" role="button" aria-pressed="false">Register</a>
-                </p>
             </div>
         </section>
-       
-        <!-- Register Card -->
-<section class="auth-card d-none" id="registerCard" role="form" aria-label="Registration form" tabindex="-1">
-    <header class="auth-header">
-      <i class="fas fa-user-plus me-2" aria-hidden="true"></i> Register
-    </header>
-    <div class="card-body">
-      <div class="mb-3">
-        <label for="registerFullName" class="form-label">Full Name</label>
-        <div class="input-group">
-          <span class="input-group-text" aria-hidden="true"><i class="fas fa-user"></i></span>
-          <input type="text" class="form-control" id="registerFullName" placeholder="Enter full name" required autocomplete="name" aria-required="true" />
-        </div>
-      </div>
-  
-      <div class="mb-3">
-        <label for="registerEmail" class="form-label">Email</label>
-        <div class="input-group">
-          <span class="input-group-text" aria-hidden="true"><i class="fas fa-envelope"></i></span>
-          <input type="email" class="form-control" id="registerEmail" placeholder="Enter email" required autocomplete="email" aria-required="true" />
-        </div>
-      </div>
-  
-      <div class="mb-3">
-        <label for="registerPassword" class="form-label">Password</label>
-        <div class="input-group">
-          <input type="password" class="form-control" id="registerPassword" placeholder="Enter password" required autocomplete="new-password" aria-required="true" />
-          <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('registerPassword')" aria-label="Toggle password visibility">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-      </div>
-  
-      <!-- Confirm Password field -->
-      <div class="mb-3">
-        <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
-        <div class="input-group">
-          <input type="password" class="form-control" id="registerConfirmPassword" placeholder="Confirm password" required autocomplete="new-password" aria-required="true" />
-          <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('registerConfirmPassword')" aria-label="Toggle confirm password visibility">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-      </div>
-  
-      <button class="btn btn-primary mb-3" id="registerBtn" onclick="handleRegister()" type="button" aria-live="polite" aria-atomic="true">
-        <i class="fas fa-user-plus me-2" aria-hidden="true"></i> Register
-      </button>
-  
-      <p class="text-center mb-0">
-        Already have an account?
-        <a href="#" class="btn-link" onclick="showLogin()" role="button" aria-pressed="false">Login</a>
-      </p>
+
+        <section class="right-section">
+            <main class="auth-container" novalidate>
+                <!-- Login Card -->
+                <section class="auth-card" id="loginCard" role="form" aria-label="Login form" tabindex="-1">
+                    <header class="auth-header">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </header>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text" aria-hidden="true"><i class="fas fa-envelope"></i></span>
+                                <input
+                                    type="email"
+                                    class="form-control"
+                                    id="loginEmail"
+                                    placeholder="Enter your email"
+                                    required
+                                    autocomplete="username"
+                                    aria-required="true"
+                                />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text" aria-hidden="true"><i class="fas fa-lock"></i></span>
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    id="loginPassword"
+                                    placeholder="Enter your password"
+                                    required
+                                    autocomplete="current-password"
+                                    aria-required="true"
+                                />
+                                <button
+                                    class="btn btn-outline-secondary"
+                                    type="button"
+                                    onclick="togglePassword('loginPassword')"
+                                    aria-label="Toggle password visibility"
+                                >
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary mb-3" id="loginBtn" onclick="handleLogin()" type="button" aria-live="polite" aria-atomic="true">
+                            <i class="fas fa-sign-in-alt me-2" aria-hidden="true"></i> Login
+                        </button>
+                        <p class="text-center mb-0">
+                            Don't have an account?
+                            <a href="#" class="btn-link" onclick="showRegister()" role="button" aria-pressed="false">Create Account</a>
+                        </p>
+                    </div>
+                </section>
+               
+                <!-- Register Card -->
+                <section class="auth-card d-none" id="registerCard" role="form" aria-label="Registration form" tabindex="-1">
+                    <header class="auth-header">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </header>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="registerFullName" class="form-label">Full Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text" aria-hidden="true"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="registerFullName" placeholder="Enter your full name" required autocomplete="name" aria-required="true" />
+                            </div>
+                        </div>
+                
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text" aria-hidden="true"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="registerEmail" placeholder="Enter your email" required autocomplete="email" aria-required="true" />
+                            </div>
+                        </div>
+                
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text" aria-hidden="true"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="registerPassword" placeholder="Create a password" required autocomplete="new-password" aria-required="true" />
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('registerPassword')" aria-label="Toggle password visibility">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                
+                        <div class="mb-3">
+                            <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text" aria-hidden="true"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="registerConfirmPassword" placeholder="Confirm your password" required autocomplete="new-password" aria-required="true" />
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('registerConfirmPassword')" aria-label="Toggle confirm password visibility">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                
+                        <button class="btn btn-primary mb-3" id="registerBtn" onclick="handleRegister()" type="button" aria-live="polite" aria-atomic="true">
+                            <i class="fas fa-user-plus me-2" aria-hidden="true"></i> Create Account
+                        </button>
+                
+                        <p class="text-center mb-0">
+                            Already have an account?
+                            <a href="#" class="btn-link" onclick="showLogin()" role="button" aria-pressed="false">Sign In</a>
+                        </p>
+                    </div>
+                </section>
+            </main>
+        </section>
     </div>
-  </section>
-  
-</main>
-<script>
-// Password toggle function
-function togglePassword(fieldId) {
-    const input = document.getElementById(fieldId);
-    const btn = event.currentTarget;
-    if (input.type === "password") {
-        input.type = "text";
-        btn.firstElementChild.classList.replace("fa-eye-slash", "fa-eye");
-    } else {
-        input.type = "password";
-        btn.firstElementChild.classList.replace("fa-eye", "fa-eye-slash");
-    }
-}
-                            
-// Show register form, hide login
-function showRegister() {
-    document.getElementById("featuresTeaser").classList.add("d-none");
-    document.getElementById("loginCard").classList.add("d-none");
-    document.getElementById("registerCard").classList.remove("d-none");
-    // Focus first input for accessibility
-    document.getElementById("registerFullName").focus();
-}
-                            
-// Show login form, hide register
-function showLogin() {
-    document.getElementById("featuresTeaser").classList.remove("d-none");
-    document.getElementById("registerCard").classList.add("d-none");
-    document.getElementById("loginCard").classList.remove("d-none");
-    // Focus first input for accessibility
-    document.getElementById("loginEmail").focus();
-}
-                            
-// Notification container
-let notificationTimeout;
-function showNotification(message, type = "success") {
-    clearTimeout(notificationTimeout);
-    let notification = document.querySelector(".notification");
-    if (!notification) {
-        notification = document.createElement("div");
-        notification.className = "notification";
-        document.body.appendChild(notification);
-    }
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.setAttribute("role", "alert");
-    notification.setAttribute("aria-live", "polite");
-    notification.style.opacity = "1";
-    
-    notificationTimeout = setTimeout(() => {
-        notification.style.opacity = "0";
-    }, 3500);
-}
-                            
-// Basic email format validation
-function isValidEmail(email) {
-    // Simple regex for basic validation
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-                            
-// Login handler
-async function handleLogin() {
-    console.log('handleLogin() called');
-    const loginBtn = document.getElementById("loginBtn");
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value.trim();
 
-    if (!email || !password) {
-        showNotification("Please fill in both email and password.", "error");
-        return;
-    }
-    if (!isValidEmail(email)) {
-        showNotification("Please enter a valid email address.", "error");
-        return;
-    }
+    <script>
+        // Password toggle function
+        function togglePassword(fieldId) {
+            const input = document.getElementById(fieldId);
+            const btn = event.currentTarget;
+            if (input.type === "password") {
+                input.type = "text";
+                btn.firstElementChild.classList.replace("fa-eye", "fa-eye-slash");
+            } else {
+                input.type = "password";
+                btn.firstElementChild.classList.replace("fa-eye-slash", "fa-eye");
+            }
+        }
+                                
+        // Show register form, hide login
+        function showRegister() {
+            const container = document.querySelector('.auth-container');
+            container.classList.add('switch-card-animation');
+            
+            setTimeout(() => {
+                document.getElementById("loginCard").classList.add("d-none");
+                document.getElementById("registerCard").classList.remove("d-none");
+                document.getElementById("registerFullName").focus();
+                container.classList.remove('switch-card-animation');
+            }, 300);
+        }
+                                
+        // Show login form, hide register
+        function showLogin() {
+            const container = document.querySelector('.auth-container');
+            container.classList.add('switch-card-animation');
+            
+            setTimeout(() => {
+                document.getElementById("registerCard").classList.add("d-none");
+                document.getElementById("loginCard").classList.remove("d-none");
+                document.getElementById("loginEmail").focus();
+                container.classList.remove('switch-card-animation');
+            }, 300);
+        }
+                                
+        // Notification container
+        let notificationTimeout;
+        function showNotification(message, type = "success") {
+            clearTimeout(notificationTimeout);
+            let notification = document.querySelector(".notification");
+            if (!notification) {
+                notification = document.createElement("div");
+                notification.className = "notification";
+                document.body.appendChild(notification);
+            }
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.setAttribute("role", "alert");
+            notification.setAttribute("aria-live", "polite");
+            notification.style.opacity = "1";
+            
+            notificationTimeout = setTimeout(() => {
+                notification.style.opacity = "0";
+            }, 3500);
+        }
+                                
+        // Basic email format validation
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+                                
+        // Login handler
+        async function handleLogin() {
+            console.log('handleLogin() called');
+            const loginBtn = document.getElementById("loginBtn");
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
 
-    loginBtn.disabled = true;
-    try {
-        const res = await fetch('https://finance-tracker-pro-server.onrender.com/api/login', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
+            if (!email || !password) {
+                showNotification("Please fill in both email and password.", "error");
+                return;
+            }
+            if (!isValidEmail(email)) {
+                showNotification("Please enter a valid email address.", "error");
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.classList.add('btn-loading');
+            
+            try {
+                const res = await fetch('https://finance-tracker-pro-server.onrender.com/api/login', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        showNotification("Invalid email or password.", "error");
+                    } else {
+                        showNotification("Login failed. Please try again later.", "error");
+                    }
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    console.log('Token stored:', data.token);
+                }
+
+                if (data.email) {
+                    localStorage.setItem('financeLoggedInUserEmail', data.email);
+                    console.log('Email stored:', data.email);
+                }
+
+                if (data.fullName) {
+                    localStorage.setItem('financeLoggedInUserFullName', data.fullName);
+                    console.log('Full name stored:', data.fullName);
+                }
+
+                showNotification("Login successful!", "success");
+
+                setTimeout(() => {
+                    window.location.href = "26.html";
+                }, 1000);
+
+            } catch (error) {
+                console.error(error);
+                showNotification("Network error. Please try again.", "error");
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.classList.remove('btn-loading');
+            }
+        }
+
+        // Register handler
+        async function handleRegister() {
+            console.log('handleRegister() called');
+            const registerBtn = document.getElementById("registerBtn");
+            const fullName = document.getElementById("registerFullName").value.trim();
+            const email = document.getElementById("registerEmail").value.trim();
+            const password = document.getElementById("registerPassword").value.trim();
+            const confirmPassword = document.getElementById("registerConfirmPassword").value.trim();
+
+            if (!fullName || !email || !password || !confirmPassword) {
+                showNotification("Please fill all the registration fields.", "error");
+                return;
+            }
+            if (!isValidEmail(email)) {
+                showNotification("Please enter a valid email address.", "error");
+                return;
+            }
+            if (password.length < 6) {
+                showNotification("Password must be at least 6 characters.", "error");
+                return;
+            }
+            if (password !== confirmPassword) {
+                showNotification("Passwords do not match.", "error");
+                return;
+            }
+
+            registerBtn.disabled = true;
+            registerBtn.classList.add('btn-loading');
+            
+            try {
+                const hashedPassword = password;
+
+                const res = await fetch('https://finance-tracker-pro-server.onrender.com/api/register', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fullName, email, password: hashedPassword }),
+                });
+
+                if (!res.ok) {
+                    if (res.status === 409) {
+                        showNotification("Email already exists. Please use a different email.", "error");
+                    } else {
+                        showNotification("Registration failed. Please try again later.", "error");
+                    }
+                    return;
+                }
+
+                const data = await res.json();
+                showNotification("Account created successfully! Please login.", "success");
+
+                // Clear form and switch to login
+                document.getElementById("registerFullName").value = "";
+                document.getElementById("registerEmail").value = "";
+                document.getElementById("registerPassword").value = "";
+                document.getElementById("registerConfirmPassword").value = "";
+
+                setTimeout(() => {
+                    showLogin();
+                }, 1500);
+
+            } catch (error) {
+                console.error(error);
+                showNotification("Network error. Please try again.", "error");
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.classList.remove('btn-loading');
+            }
+        }
+
+        // Initialize particles
+        function createParticles() {
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                document.body.appendChild(particle);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const loginCard = document.getElementById('loginCard');
+                const registerCard = document.getElementById('registerCard');
+                
+                if (!loginCard.classList.contains('d-none')) {
+                    handleLogin();
+                } else if (!registerCard.classList.contains('d-none')) {
+                    handleRegister();
+                }
+            }
         });
 
-        if (!res.ok) {
-            if (res.status === 401) {
-                showNotification("Invalid email or password.", "error");
-            } else {
-                showNotification("Login failed. Please try again later.", "error");
-            }
-            return;
-        }
-
-        const data = await res.json();
-
-        if (data.token) {
-            localStorage.setItem('token', data.token);
-            console.log('Token stored:', data.token);
-        }
-
-        if (data.email) {
-            localStorage.setItem('financeLoggedInUserEmail', data.email);
-            console.log('Email stored:', data.email);
-        }
-
-        if (data.fullName) {
-            localStorage.setItem('financeLoggedInUserFullName', data.fullName);
-            console.log('Full name stored:', data.fullName);
-        }
-
-
-        showNotification("Login successful!", "success");
-
-        // Redirect to main app page after 1s delay
-        setTimeout(() => {
-            window.location.href = "main.html";
-        }, 1000);
-
-    } catch (error) {
-        console.error(error);
-        showNotification("Network error. Please try again.", "error");
-    } finally {
-        loginBtn.disabled = false;
-    }
-}
-
-                       
-// Register handler
-async function handleRegister() {
-    console.log('handleRegister() called');
-    const registerBtn = document.getElementById("registerBtn");
-    const fullName = document.getElementById("registerFullName").value.trim();
-    const email = document.getElementById("registerEmail").value.trim();
-    const password = document.getElementById("registerPassword").value.trim();
-    const confirmPassword = document.getElementById("registerConfirmPassword").value.trim();
-
-    if (!fullName || !email || !password || !confirmPassword) {
-        showNotification("Please fill all the registration fields.", "error");
-        return;
-    }
-    if (!isValidEmail(email)) {
-        showNotification("Please enter a valid email address.", "error");
-        return;
-    }
-    if (password.length < 6) {
-        showNotification("Password must be at least 6 characters.", "error");
-        return;
-    }
-    if (password !== confirmPassword) {
-        showNotification("Passwords do not match.", "error");
-        return;
-    }
-
-    registerBtn.disabled = true;
-    try {
-        // Placeholder hash just demo, hash on backend!
-        // const hashedPassword = await bcrypt.hash(password, 10);
-        const hashedPassword = password;
-
-        const res = await fetch('https://finance-tracker-pro-server.onrender.com/api/register', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fullName, email, password: hashedPassword }),
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            document.getElementById('loginEmail').focus();
         });
-
-        if (!res.ok) {
-            if (res.status === 409) {
-                showNotification("Email already registered.", "error");
-            } else {
-                showNotification("Registration failed. Please try again.", "error");
-            }
-            return;
-        }
-
-        showNotification("Registration successful! You can now login.", "success");
-        setTimeout(() => {
-            showLogin();
-            // Clear register inputs
-            document.getElementById("registerFullName").value = "";
-            document.getElementById("registerEmail").value = "";
-            document.getElementById("registerPassword").value = "";
-            document.getElementById("registerConfirmPassword").value = "";
-        }, 1500);
-    } catch (error) {
-        console.error(error);
-        showNotification("Network error. Please try again.", "error");
-    } finally {
-        registerBtn.disabled = false;
-    }
-}
-
-                            
-// Dark/light mode toggle
-const toggleBtn = document.querySelector(".toggle-mode");
-toggleBtn.addEventListener("click", () => {
-    if (document.body.classList.contains("dark-mode")) {
-        document.body.classList.remove("dark-mode");
-        document.body.classList.add("light-mode");
-        toggleBtn.firstElementChild.className = "fas fa-sun";
-        localStorage.setItem("darkMode", "false");
-    } else {
-        document.body.classList.remove("light-mode");
-        document.body.classList.add("dark-mode");
-        toggleBtn.firstElementChild.className = "fas fa-moon";
-        localStorage.setItem("darkMode", "true");
-    }
-});
-                            
-// On page load: set theme from localStorage or default dark
-window.onload = function () {
-    const darkMode = localStorage.getItem("darkMode");
-    if (darkMode === "false") {
-        document.body.classList.remove("dark-mode");
-        document.body.classList.add("light-mode");
-        toggleBtn.firstElementChild.className = "fas fa-sun";
-    } else {
-        document.body.classList.add("dark-mode");
-        document.body.classList.remove("light-mode");
-        toggleBtn.firstElementChild.className = "fas fa-moon";
-    }
-    // Focus first input of login on load
-    document.getElementById("loginEmail").focus();
-};
-</script>
-</body> 
-</html>                            
+    </script>
+</body>
+</html>
