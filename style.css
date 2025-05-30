@@ -320,8 +320,8 @@ body.dark-mode .form-label {
 /* Simplified User Menu */
 #userName {
     position: fixed;
-    top: 1.5rem;
-    right: 180px;
+    top: 2rem;
+    right: 250px;
     color: var(--text-primary);
     font-weight: 600;
     padding: 0.4rem 0.8rem;
@@ -333,8 +333,8 @@ body.dark-mode .form-label {
 
 .dropdown {
     position: fixed;
-    top: 1.5rem;
-    right: 1.5rem;
+    top: 1.8rem;
+    right: 120px;
     z-index: 5000;
 }
 
@@ -352,12 +352,14 @@ body.dark-mode .form-label {
 }
 
 .dropdown-menu {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: rgba(36, 31, 31, 0.9); /* Solid, soft glassy white */
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
     padding: 0.4rem;
     margin-top: 0.4rem;
     z-index: 5000;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(0px); /* no blur since it's non-transparent */
 }
 
 .dropdown-item {
