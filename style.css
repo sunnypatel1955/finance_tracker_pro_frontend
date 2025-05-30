@@ -79,8 +79,8 @@ body.light-mode {
 /* Simplified Sidebar Toggle */
 .sidebar-toggle {
     position: fixed;
-    top: 1.5rem;
-    left: 1.5rem;
+    top: 1rem;
+    left: 1rem;
     width: 45px;
     height: 45px;
     background: var(--glass-bg);
