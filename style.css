@@ -178,6 +178,10 @@ body.light-mode {
     background: rgba(99, 102, 241, 0.25);
 }
 
+body.dark-mode .form-label {
+    color: #fff;
+}
+
 .investments {
     background: rgba(34, 197, 94, 0.25);
 }
