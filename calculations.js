@@ -205,6 +205,26 @@ if (totalIncome > 0) {
         insights.push("Great! You have no active loan EMIs currently.");
     }
 }
+// NEW INSIGHTS ADDED BELOW
+
+    // Savings Rate Analysis
+    if (totalIncome > 0) {
+        const totalExpenses = data.expenses.reduce((sum, expense) => sum + expense.value, 0);
+        const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
+        
+        if (savingsRate >= 30) {
+            insights.push(`Excellent! You're saving ${savingsRate.toFixed(1)}% of your income. You're on track for strong financial growth.`);
+        } else if (savingsRate >= 20) {
+            insights.push(`Good savings rate of ${savingsRate.toFixed(1)}%. Consider increasing to 30% for accelerated wealth building.`);
+        } else if (savingsRate >= 10) {
+            insights.push(`Your savings rate is ${savingsRate.toFixed(1)}%. Aim for at least 20% to build long-term wealth.`);
+        } else if (savingsRate > 0) {
+            insights.push(`Low savings rate of ${savingsRate.toFixed(1)}%. Focus on reducing expenses or increasing income to save more.`);
+        } else {
+            insights.push(`You're spending more than you earn. This is unsustainable - create a budget to control expenses immediately.`);
+        }
+    }
+    
 if (insights.length === 0) {
     insights.push('Add more monthly records to get personalized insights and recommendations.');
 }
