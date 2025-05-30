@@ -105,23 +105,24 @@ body.light-mode {
 /* Simplified Title */
 .finance-tracker-title {
     font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    font-size: 1.4rem;
+    font-weight: 800;
+    font-size: 1.5rem;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin: 1rem 0 1.5rem;
+    margin: 3rem 0 2rem 0;
     text-align: center;
+    position: relative;
 }
 
 .finance-tracker-title::after {
     content: '';
     position: absolute;
-    bottom: -8px;
+    bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 40px;
-    height: 2px;
+    width: 50px;
+    height: 3px;
     background: var(--primary-gradient);
     border-radius: 2px;
 }
