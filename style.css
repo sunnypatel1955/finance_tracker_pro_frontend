@@ -666,3 +666,38 @@ body.light-mode .cookie-consent {
         transition: none !important;
     }
 }
+/* Glassy black modal background for Export Modal only */
+#exportModal .modal-content {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    color: #fff;
+}
+
+#exportModal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#exportModal .modal-title {
+    color: #fff;
+}
+
+#exportModal .modal-body {
+    color: #ddd;
+}
+
+#exportModal .modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#exportModal .btn-close {
+    filter: invert(1);
+}
+
+#exportModal .btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
