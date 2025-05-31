@@ -191,6 +191,10 @@ body.dark-mode .form-label {
     background: rgba(239, 68, 68, 0.25);
 }
 
+body.light-mode .form-label {
+    color: #00000065 !important;
+}
+
 .income {
     background: rgba(16, 185, 129, 0.25);
 }
