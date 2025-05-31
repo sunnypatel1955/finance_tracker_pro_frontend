@@ -244,6 +244,12 @@ body.dark-mode .form-label {
     transition: border-color 0.3s var(--animation-smooth);
 }
 
+body.light-mode .form-control,
+body.light-mode .form-select {
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
 .form-control:focus, .form-select:focus {
     border-color: rgba(99, 102, 241, 0.5);
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
