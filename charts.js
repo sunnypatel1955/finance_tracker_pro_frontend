@@ -78,6 +78,11 @@ function initCharts() {
         });
     }
     updateAllCharts();
+    // Quick fix for dark mode label colors
+setTimeout(() => {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    updateChartColors(isDarkMode);
+}, 100);
 }
 
 function updateAllCharts() {
