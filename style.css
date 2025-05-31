@@ -45,7 +45,7 @@ body.light-mode {
 .sidebar {
     position: fixed;
     top: 0;
-    left: -320px;
+    left: 0;
     width: 320px;
     height: 100vh;
     background: var(--glass-bg);
@@ -53,18 +53,19 @@ body.light-mode {
     border-right: 1px solid var(--glass-border);
     padding: 1.5rem;
     box-shadow: var(--glass-shadow);
-    z-index: 1000;
+    z-index: 1050;
     transition: transform 0.3s var(--animation-smooth); /* Use transform for better performance */
     overflow-y: auto;
+    transform: translateX(-320px);
 }
 
 .sidebar.active {
-    transform: translateX(320px);
+    transform: translateX(0px);
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar::-webkit-scrollbar {
-    width: 6px;
+    width: 0px;
 }
 
 .sidebar::-webkit-scrollbar-track {
@@ -73,7 +74,7 @@ body.light-mode {
 
 .sidebar::-webkit-scrollbar-thumb {
     background: var(--glass-border);
-    border-radius: 3px;
+    border-radius: 0px;
 }
 
 /* Simplified Sidebar Toggle */
@@ -583,7 +584,11 @@ body.light-mode .cookie-consent {
 @media (max-width: 768px) {
     .sidebar {
         width: 280px;
+        transform: translateX(-280px);
         padding: 1rem;
+    }
+    .sidebar.active {
+        transform: translateX(0);
     }
     
     .main-content {
@@ -611,11 +616,10 @@ body.light-mode .cookie-consent {
 @media (max-width: 576px) {
     .sidebar {
         width: 100%;
-        left: -100%;
+        transform: translateX(-100%);
     }
-    
     .sidebar.active {
-        left: 0;
+        transform: translateX(0);
     }
     
     .cookie-consent-buttons {
