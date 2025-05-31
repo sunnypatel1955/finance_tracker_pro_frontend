@@ -364,7 +364,7 @@ body.dark-mode .form-label {
 }
 
 .dropdown-item {
-    color: var(--text-secondary);
+    color: white;
     border-radius: 6px;
     padding: 0.6rem 0.8rem;
     transition: background 0.3s var(--animation-smooth);
