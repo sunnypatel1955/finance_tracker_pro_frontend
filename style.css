@@ -183,16 +183,16 @@ body.dark-mode .form-label {
     color: #fff;
 }
 
+body.light-mode .form-label {
+    color: black !important;
+}
+
 .investments {
     background: rgba(34, 197, 94, 0.25);
 }
 
 .loans {
     background: rgba(239, 68, 68, 0.25);
-}
-
-body.light-mode .form-label {
-    color: #00000065 !important;
 }
 
 .income {
