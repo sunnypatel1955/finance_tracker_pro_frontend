@@ -651,7 +651,36 @@
                 </div>
             </div>
         </div>
-    
+ <!-- Export Modal -->
+  <div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Get Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-2"></i>Get report in Excel
+                    </button>
+                    <button class="btn btn-success" onclick="exportToCSV()">
+                        <i class="fas fa-file-csv me-2"></i>Get report in CSV
+                    </button>
+                    <button class="btn btn-info" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf me-2"></i>Get report in PDF
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportToJSON()">
+                        <i class="fas fa-file-code me-2"></i>Get report in JSON
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+  </div>      
  <!-- Cookie Consent Popup -->
  <div class="cookie-consent" id="cookieConsent">
     <p>We use cookies to store your financial data locally and improve your experience. You can accept, decline, or customize your preferences.</p>
