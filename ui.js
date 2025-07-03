@@ -1,263 +1,536 @@
-let previousData = null;
-console.log('Initial previousData:', previousData);
-
+// Enhanced UI Management Module
 let hasCookieConsent = false;
-console.log('Initial hasCookieConsent:', hasCookieConsent);
-
 let notificationQueue = [];
-console.log('Initial notificationQueue:', notificationQueue);
+let isDisplayingNotification = false;
+let currentTourStep = 0;
 
-let isDisplaying = false;
-console.log('Initial isDisplaying:', isDisplaying);
-
+// Debounce utility
 function debounce(func, wait) {
-    console.log(`Creating debounced function with wait time: ${wait}ms`);
     let timeout;
     return function (...args) {
-        console.log('Debounced function called with args:', args);
         clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            console.log(`Debounced function executing after ${wait}ms`);
-            func.apply(this, args);
-        }, wait);
+        timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
 
-const debouncedUpdate = debounce(update, 300);
-window.debouncedUpdate = debouncedUpdate;
-console.log('debouncedUpdate function created and assigned to window');
+// Create debounced update function - wait for update function to be available
+// Replace the existing debouncedUpdate creation with this improved version
+function createDebouncedUpdate() {
+    return function(...args) {
+        if (typeof window.update === 'function') {
+            if (!window.debouncedUpdate || window.debouncedUpdate.name !== 'debouncedUpdate') {
+                window.debouncedUpdate = debounce(window.update, 300);
+            }
+            window.debouncedUpdate(...args);
+        } else {
+            console.warn('Update function not yet available, queuing call');
+            setTimeout(() => {
+                if (typeof window.update === 'function') {
+                    window.debouncedUpdate = debounce(window.update, 300);
+                    window.debouncedUpdate(...args);
+                }
+            }, 100);
+        }
+    };
+}
 
+// Initialize the debounced update function
+window.debouncedUpdate = createDebouncedUpdate();
+
+// Check periodically if update function becomes available and update debouncedUpdate
+const updateChecker = setInterval(() => {
+    if (typeof window.update === 'function') {
+        window.debouncedUpdate = debounce(window.update, 300);
+        clearInterval(updateChecker);
+    }
+}, 100);
+
+// Toggle section visibility
 function toggleSection(sectionId) {
-    console.log(`toggleSection called for sectionId: ${sectionId}`);
     const section = document.getElementById(sectionId);
-    if (!section) {
-        console.warn(`No section found with id: ${sectionId}`);
-        return;
-    }
-
-    const button = section.parentElement.querySelector('.toggle-btn');
-    if (!button) {
-        console.warn(`No toggle button found for sectionId: ${sectionId}`);
-        return;
-    }
-
+    if (!section) return;
+    
+    const button = section.closest('.card').querySelector('.toggle-btn i');
+    if (!button) return;
+    
     if (section.classList.contains('show')) {
         section.classList.remove('show');
-        button.textContent = '+';
-        console.log(`Section ${sectionId} hidden.`);
+        button.classList.replace('fa-chevron-up', 'fa-chevron-down');
     } else {
         section.classList.add('show');
-        button.textContent = '-';
-        console.log(`Section ${sectionId} shown.`);
+        button.classList.replace('fa-chevron-down', 'fa-chevron-up');
     }
 }
 
-
-function allowOnlyNumbersAndDot(event) {
-    const char = String.fromCharCode(event.which);
-    const isNumber = /[0-9]/.test(char);
-    const isDot = char === '.';
-    const alreadyHasDot = event.target.value.includes('.');
-
-    if (!isNumber && (!isDot || alreadyHasDot)) {
-        event.preventDefault();
-    }
-}
-
-function preventInvalidPaste(event) {
-    const paste = (event.clipboardData || window.clipboardData).getData('text');
-    if (!/^\d*\.?\d*$/.test(paste)) {
-        event.preventDefault();
-    }
-}
-
+// Add row to table
 function addRow(tableId, event) {
-    const table = document.getElementById(tableId).querySelector('tbody');
-    const currentRows = table.querySelectorAll('tr').length;
-
-    // Define limits per table
-    const rowLimits = {
-        'investments': 50,
-        'loans': 10,
-        'income': 25,
-        'expenses': 40
-    };
-
-    if (currentRows >= rowLimits[tableId]) {
-        alert(`Maximum ${rowLimits[tableId]} entries allowed for ${tableId} in the current month.`);
+    const table = document.getElementById(tableId)?.querySelector('tbody');
+    if (!table) {
+        console.error(`Table ${tableId} not found`);
         return;
     }
-
-    const row = document.createElement('tr');
-
-    // Define default expected return percentages and risk levels for each investment type
-    const defaultReturns = {
-        "Fixed Income": 6.5,
-        "Mutual Funds": 10.0,
-        "Stocks": 12.0,
-        "Real Estate": 9.0,
-        "Gold": 8.0,
-        "Bonds": 7.5,
-        "Cryptocurrency": 12.0,
-        "Other": 7.0 
+    
+    const currentRows = table.querySelectorAll('tr').length;
+    
+    // Row limits
+    const rowLimits = {
+        'investments': 50,
+        'loans': 20,
+        'income': 25,
+        'expenses': 50,
+        'goals': 20
     };
-
-    const defaultRisks = {
-        "Fixed Income": "low",
-        "Mutual Funds": "medium",
-        "Stocks": "high",
-        "Real Estate": "medium",
-        "Gold": "medium",
-        "Bonds": "low",
-        "Cryptocurrency": "high",
-        "Other": "medium" 
-    };
-
-    if (tableId === 'investments') {
-        row.innerHTML = `
-            <td><select class="form-select" name="investment_name" oninput="debouncedUpdate()">
-                <option value="Fixed Income">Fixed Income</option>
-                <option value="Mutual Funds">Mutual Funds</option>
-                <option value="Stocks">Stocks</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Gold">Gold</option>
-                <option value="Bonds">Bonds</option>
-                <option value="Cryptocurrency">Cryptocurrency</option>
-                <option value="Other">Other</option>
-            </select></td>
-            <td><input type="number" class="form-control" name="investment_value" placeholder="Value" step="100" min="0" oninput="debouncedUpdate()"></td>
-            <td><input type="number" class="form-control" name="investment_return" placeholder="Return" step="0.1" min="0" oninput="debouncedUpdate()"></td>
-            <td><select class="form-select" name="investment_risk" oninput="debouncedUpdate()">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-            </select></td>
-            <td><input type="text" class="form-control" name="investment_remark" placeholder="Remark" maxlength="30" oninput="debouncedUpdate()"></td>
-            <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')">X</button></td>
-        `;
-
-        const nameSelect = row.querySelector('[name="investment_name"]');
-        const returnInput = row.querySelector('[name="investment_return"]');
-        const riskSelect = row.querySelector('[name="investment_risk"]');
-        const baseName = nameSelect.value; // Default selected value (e.g., "Fixed Income")
-        
-        // Set default return and risk values based on selected investment
-        returnInput.value = defaultReturns[baseName] || 0;
-        riskSelect.value = defaultRisks[baseName] || "medium";
-
-        // Update display name to handle duplicates
-        const existingNames = Array.from(table.querySelectorAll('[name="investment_name"]')).map(select => select.value.split('-')[0]);
-        const sameTypeCount = existingNames.filter(name => name === baseName).length + 1;
-        const displayName = sameTypeCount > 1 ? `${baseName}-${sameTypeCount}` : baseName;
-        Array.from(nameSelect.options).forEach(option => {
-            if (option.value === baseName) {
-                option.text = displayName;
-                option.value = displayName;
-            }
-        });
-        nameSelect.value = displayName;
-
-        // Add event listener to update return and risk when investment name changes
-        nameSelect.addEventListener('change', function() {
-            const selectedBaseName = this.value.split('-')[0]; // Get base name without suffix
-            returnInput.value = defaultReturns[selectedBaseName] || 0;
-            riskSelect.value = defaultRisks[selectedBaseName] || "medium";
-            debouncedUpdate(); // Trigger update when name changes
-        });
-    } else {
-        // Other tables (income, loans, expenses)
-        row.innerHTML = tableId === 'income' ? `
-            <td><select class="form-select" name="income_name" oninput="debouncedUpdate()">
-                <option value="Salary">Salary</option>
-                <option value="Freelance">Freelance</option>
-                <option value="Business">Business</option>
-                <option value="Rental Income">Rental Income</option>
-                <option value="Other">Other</option>
-            </select></td>
-            <td><input type="number" class="form-control" name="income_value" placeholder="Amount" step="100" min="0" oninput="debouncedUpdate()"></td>
-            <td><input type="text" class="form-control" name="income_remark" placeholder="Remark" maxlength="30" oninput="debouncedUpdate()"></td>
-            <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')">X</button></td>
-        ` : tableId === 'loans' ? `
-            <td><select class="form-select" name="loan_name" oninput="debouncedUpdate()">
-                <option value="Home Loan">Home Loan</option>
-                <option value="Car Loan">Car Loan</option>
-                <option value="Personal Loan">Personal Loan</option>
-                <option value="Education Loan">Education Loan</option>
-                <option value="Other">Other</option>
-            </select></td>
-            <td><input type="number" class="form-control" name="loan_value" placeholder="Amount" step="100" min="0" oninput="debouncedUpdate()"></td>
-            <td><input type="number" class="form-control" name="loan_interest" placeholder="Interest" step="0.1" min="0" oninput="debouncedUpdate()"></td>
-            <td><input type="text" class="form-control" name="loan_remark" placeholder="Remark" maxlength="30" oninput="debouncedUpdate()"></td>
-            <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')">X</button></td>
-        ` : tableId === 'expenses' ? `
-            <td><select class="form-select" name="expense_category" oninput="debouncedUpdate()">
-                <option value="Housing">Housing</option>
-                <option value="Food">Food</option>
-                <option value="Transport">Transport</option>
-                <option value="Loan Installment">Loan Installment</option>
-                <option value="Other">Other</option>
-            </select></td>
-            <td><select class="form-select" name="expense_type" oninput="debouncedUpdate()">
-                <option value="Recurring">Recurring</option>
-                <option value="Exceptional">Exceptional</option>
-            </select></td>
-            <td><input type="number" class="form-control" name="expense_value" placeholder="Amount" step="100" min="0" oninput="debouncedUpdate()"></td>
-            <td><input type="text" class="form-control" name="expense_remark" placeholder="Remark" maxlength="30" oninput="debouncedUpdate()"></td>
-            <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')">X</button></td>
-        ` : '';
+    
+    if (currentRows >= rowLimits[tableId]) {
+        showNotification(`Maximum ${rowLimits[tableId]} entries allowed for ${tableId}`, 'warning');
+        return;
     }
-
-    // Add input restrictions on all number fields in the row
-    const numberInputs = row.querySelectorAll('input[type="number"]');
-
-    numberInputs.forEach(input => {
-        input.addEventListener('keypress', allowOnlyNumbersAndDot);
-        input.addEventListener('paste', preventInvalidPaste);
-    });
-
+    
+    const row = document.createElement('tr');
+    row.style.opacity = '0';
+    
+    // Default values for different investment types
+    const investmentDefaults = {
+        "Fixed Income": { return: 6.5, risk: "low" },
+        "Mutual Funds": { return: 10.0, risk: "medium" },
+        "Stocks": { return: 12.0, risk: "high" },
+        "Real Estate": { return: 9.0, risk: "medium" },
+        "Gold": { return: 8.0, risk: "medium" },
+        "Bonds": { return: 7.5, risk: "low" },
+        "Cryptocurrency": { return: 15.0, risk: "high" },
+        "Other": { return: 7.0, risk: "medium" }
+    };
+    
+    switch (tableId) {
+        case 'investments':
+            const defaultInvestment = "Fixed Income";
+            const defaults = investmentDefaults[defaultInvestment];
+            
+            row.innerHTML = `
+                <td><select class="form-select" name="investment_name" oninput="handleInvestmentChange(this); window.debouncedUpdate()">
+                    <option value="Fixed Income">Fixed Income</option>
+                    <option value="Mutual Funds">Mutual Funds</option>
+                    <option value="Stocks">Stocks</option>
+                    <option value="Real Estate">Real Estate</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Bonds">Bonds</option>
+                    <option value="Cryptocurrency">Cryptocurrency</option>
+                    <option value="Other">Other</option>
+                </select></td>
+                <td><input type="number" class="form-control" name="investment_value" placeholder="0" step="100" min="0" oninput="window.debouncedUpdate()"></td>
+                <td><input type="number" class="form-control" name="investment_return" value="${defaults.return}" step="0.1" min="-100" max="100" oninput="window.debouncedUpdate()"></td>
+                <td><select class="form-select" name="investment_risk" oninput="window.debouncedUpdate()">
+                    <option value="low" ${defaults.risk === 'low' ? 'selected' : ''}>Low</option>
+                    <option value="medium" ${defaults.risk === 'medium' ? 'selected' : ''}>Medium</option>
+                    <option value="high" ${defaults.risk === 'high' ? 'selected' : ''}>High</option>
+                </select></td>
+                <td><input type="text" class="form-control" name="investment_remark" placeholder="Notes" maxlength="50" oninput="window.debouncedUpdate()"></td>
+                <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button></td>
+            `;
+            break;
+            
+        case 'income':
+            row.innerHTML = `
+                <td><select class="form-select" name="income_name" oninput="window.debouncedUpdate()">
+                    <option value="Salary">Salary</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Business">Business</option>
+                    <option value="Rental Income">Rental Income</option>
+                    <option value="Dividend">Dividend</option>
+                    <option value="Interest">Interest</option>
+                    <option value="Other">Other</option>
+                </select></td>
+                <td><input type="number" class="form-control" name="income_value" placeholder="0" step="100" min="0" oninput="window.debouncedUpdate()"></td>
+                <td><input type="text" class="form-control" name="income_remark" placeholder="Notes" maxlength="50" oninput="window.debouncedUpdate()"></td>
+                <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button></td>
+            `;
+            break;
+            
+        case 'loans':
+            row.innerHTML = `
+                <td><select class="form-select" name="loan_name" oninput="window.debouncedUpdate()">
+                    <option value="Home Loan">Home Loan</option>
+                    <option value="Car Loan">Car Loan</option>
+                    <option value="Personal Loan">Personal Loan</option>
+                    <option value="Education Loan">Education Loan</option>
+                    <option value="Business Loan">Business Loan</option>
+                    <option value="Other">Other</option>
+                </select></td>
+                <td><input type="number" class="form-control" name="loan_value" placeholder="0" step="100" min="0" oninput="window.debouncedUpdate()"></td>
+                <td><input type="number" class="form-control" name="loan_interest" placeholder="0" step="0.1" min="0" max="50" oninput="window.debouncedUpdate()"></td>
+                <td><input type="text" class="form-control" name="loan_remark" placeholder="Notes" maxlength="50" oninput="window.debouncedUpdate()"></td>
+                <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button></td>
+            `;
+            break;
+            
+        case 'expenses':
+            row.innerHTML = `
+                <td><select class="form-select" name="expense_category" oninput="window.debouncedUpdate()">
+                    <option value="Housing">Housing</option>
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Loan EMI">Loan EMI</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Other">Other</option>
+                </select></td>
+                <td><select class="form-select" name="expense_type" oninput="window.debouncedUpdate()">
+                    <option value="Recurring">Recurring</option>
+                    <option value="One-time">One-time</option>
+                </select></td>
+                <td><input type="number" class="form-control" name="expense_value" placeholder="0" step="100" min="0" oninput="window.debouncedUpdate()"></td>
+                <td><input type="text" class="form-control" name="expense_remark" placeholder="Notes" maxlength="50" oninput="window.debouncedUpdate()"></td>
+                <td><button class="remove-btn" onclick="removeRow(this, '${tableId}')" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button></td>
+            `;
+            break;
+    }
+    
+    // Add input validation
+    addInputValidation(row);
+    
+    // Append row with animation
     table.appendChild(row);
-    debouncedUpdate();
+    setTimeout(() => {
+        row.style.transition = 'opacity 0.3s ease';
+        row.style.opacity = '1';
+    }, 10);
+    
+    // Focus first input
+    const firstInput = row.querySelector('input[type="number"]');
+    if (firstInput) firstInput.focus();
+    
+    // Call update function if available
+    if (typeof window.debouncedUpdate === 'function') {
+        window.debouncedUpdate();
+    }
 }
 
-
+// Add goal
 function addGoal(event) {
-    const table = document.getElementById('goals').querySelector('tbody');
+    const table = document.getElementById('goals')?.querySelector('tbody');
+    if (!table) {
+        console.error('Goals table not found');
+        return;
+    }
+    
+    const currentRows = table.querySelectorAll('tr').length;
+    
+    if (currentRows >= 20) {
+        showNotification('Maximum 20 goals allowed', 'warning');
+        return;
+    }
+    
     const row = document.createElement('tr');
+    row.style.opacity = '0';
+    
     row.innerHTML = `
-        <td><input type="text" class="form-control" name="goal_name" placeholder="e.g., Retirement" oninput="debouncedUpdate()"></td>
-        <td><input type="number" class="form-control" name="goal_target" placeholder="Target" step="100" min="0" oninput="debouncedUpdate()"></td>
-        <td><input type="text" class="form-control" name="goal_time" readonly placeholder="Years + Months"></td>
+        <td><input type="text" class="form-control" name="goal_name" placeholder="e.g., Retirement Fund" oninput="window.debouncedUpdate()"></td>
+        <td><input type="number" class="form-control" name="goal_target" placeholder="0" step="10000" min="0" oninput="window.debouncedUpdate()"></td>
+        <td><input type="text" class="form-control" name="goal_time" readonly placeholder="Calculating..."></td>
         <td><div class="progress"><div class="progress-bar bg-success" style="width: 0%"></div></div></td>
-        <td><button class="remove-btn" onclick="removeRow(this, 'goals')">X</button></td>
+        <td><button class="remove-btn" onclick="removeRow(this, 'goals')" title="Remove">
+            <i class="fas fa-times"></i>
+        </button></td>
     `;
     
-    // Add input restrictions on goal_target input
-    const targetInput = row.querySelector('input[name="goal_target"]');
-    targetInput.addEventListener('keypress', allowOnlyNumbersAndDot);
-    targetInput.addEventListener('paste', preventInvalidPaste);
-
+    addInputValidation(row);
+    
     table.appendChild(row);
-    debouncedUpdate();
+    setTimeout(() => {
+        row.style.transition = 'opacity 0.3s ease';
+        row.style.opacity = '1';
+    }, 10);
+    
+    const nameInput = row.querySelector('[name="goal_name"]');
+    if (nameInput) nameInput.focus();
+    
+    if (typeof window.debouncedUpdate === 'function') {
+        window.debouncedUpdate();
+    }
 }
 
+// Handle investment type change
+function handleInvestmentChange(selectElement) {
+    const row = selectElement.closest('tr');
+    const selectedType = selectElement.value;
+    
+    const investmentDefaults = {
+        "Fixed Income": { return: 6.5, risk: "low" },
+        "Mutual Funds": { return: 10.0, risk: "medium" },
+        "Stocks": { return: 12.0, risk: "high" },
+        "Real Estate": { return: 9.0, risk: "medium" },
+        "Gold": { return: 8.0, risk: "medium" },
+        "Bonds": { return: 7.5, risk: "low" },
+        "Cryptocurrency": { return: 15.0, risk: "high" },
+        "Other": { return: 7.0, risk: "medium" }
+    };
+    
+    const defaults = investmentDefaults[selectedType] || investmentDefaults["Other"];
+    
+    const returnInput = row.querySelector('[name="investment_return"]');
+    const riskSelect = row.querySelector('[name="investment_risk"]');
+    
+    if (returnInput) returnInput.value = defaults.return;
+    if (riskSelect) riskSelect.value = defaults.risk;
+}
+
+// Remove row with animation
 function removeRow(button, tableId) {
-    button.closest('tr').remove();
-    debouncedUpdate();
-    showNotification('Item removed', 'success');
+    const row = button.closest('tr');
+    
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Remove this item?',
+            text: 'This action cannot be undone',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, remove it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                performRowRemoval(row);
+            }
+        });
+    } else {
+        // Fallback confirmation
+        if (confirm('Remove this item? This action cannot be undone.')) {
+            performRowRemoval(row);
+        }
+    }
 }
 
-function validateInputs() {
-    let errors = [];
-    if (data.initial_cash < 0) errors.push("Liquid Cash Available cannot be negative.");
-    data.investments.forEach(i => { if (i.value < 0 || !i.name) errors.push(`Invalid investment: ${i.name || 'unnamed'}`); });
-    data.income.forEach(s => { if (s.value < 0 || !s.name) errors.push(`Invalid income: ${s.name || 'unnamed'}`); });
-    data.loans.forEach(l => { if (l.value < 0 || !l.name) errors.push(`Invalid loan: ${l.name || 'unnamed'}`); });
-    data.expenses.forEach(e => { if (e.value < 0 || !e.category) errors.push(`Invalid expense: ${e.category || 'unnamed'}`); });
-    data.goals.forEach(g => { if (g.target <= 0 || !g.name) errors.push(`Invalid goal: ${g.name || 'unnamed'}`); });
-    document.getElementById('error-message').textContent = errors.join(' ');
-    return errors.length === 0;
+// Perform the actual row removal
+function performRowRemoval(row) {
+    row.style.transition = 'opacity 0.3s ease';
+    row.style.opacity = '0';
+    
+    setTimeout(() => {
+        row.remove();
+        if (typeof window.debouncedUpdate === 'function') {
+            window.debouncedUpdate();
+        }
+        showNotification('Item removed', 'success');
+    }, 300);
 }
 
+// Add input validation
+function addInputValidation(row) {
+    // Number inputs
+    const numberInputs = row.querySelectorAll('input[type="number"]');
+    numberInputs.forEach(input => {
+        input.addEventListener('keypress', validateNumberInput);
+        input.addEventListener('paste', validatePaste);
+    });
+    
+    // Text inputs
+    const textInputs = row.querySelectorAll('input[type="text"]');
+    textInputs.forEach(input => {
+        if (!input.readOnly) {
+            input.addEventListener('input', validateTextInput);
+        }
+    });
+}
+
+// Validate number input
+function validateNumberInput(event) {
+    const char = String.fromCharCode(event.which);
+    const value = event.target.value;
+    const isNumber = /[0-9]/.test(char);
+    const isDot = char === '.';
+    const isMinus = char === '-';
+    const hasDot = value.includes('.');
+    const hasMinus = value.includes('-');
+    
+    // Allow backspace, delete, tab, escape, enter
+    if ([8, 9, 27, 13, 46].indexOf(event.keyCode) !== -1 ||
+        // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+        (event.keyCode === 65 && event.ctrlKey === true) ||
+        (event.keyCode === 67 && event.ctrlKey === true) ||
+        (event.keyCode === 86 && event.ctrlKey === true) ||
+        (event.keyCode === 88 && event.ctrlKey === true)) {
+        return;
+    }
+    
+    // Allow minus at start for returns
+    if (isMinus && event.target.name === 'investment_return' && value.length === 0) {
+        return;
+    }
+    
+    // Prevent invalid characters
+    if (!isNumber && (!isDot || hasDot)) {
+        event.preventDefault();
+    }
+}
+
+// Validate paste
+function validatePaste(event) {
+    const paste = (event.clipboardData || window.clipboardData).getData('text');
+    if (!/^-?\d*\.?\d*$/.test(paste)) {
+        event.preventDefault();
+    }
+}
+
+// Validate text input
+function validateTextInput(event) {
+    const input = event.target;
+    const maxLength = parseInt(input.getAttribute('maxlength') || '50');
+    
+    if (input.value.length > maxLength) {
+        input.value = input.value.substring(0, maxLength);
+    }
+}
+
+// 6. Optimized notification system
+let notificationTimeouts = new Set();
+
+function showNotification(message, type = 'info') {
+    // Limit notification queue size
+    if (notificationQueue.length > 5) {
+        notificationQueue.shift(); // Remove oldest
+    }
+    
+    notificationQueue.push({ message, type });
+    displayNextNotification();
+}
+
+function displayNextNotification() {
+    if (isDisplayingNotification || notificationQueue.length === 0) return;
+    
+    isDisplayingNotification = true;
+    const { message, type } = notificationQueue.shift();
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${getNotificationIcon(type)} me-2"></i>
+        <span>${message}</span>
+    `;
+    
+    const activeNotifications = document.querySelectorAll('.notification');
+    const offset = Array.from(activeNotifications).reduce((sum, n) => sum + n.offsetHeight + 10, 90);
+    notification.style.top = `${offset}px`;
+    
+    document.body.appendChild(notification);
+    
+    // Use requestAnimationFrame for smoother animations
+    requestAnimationFrame(() => {
+        notification.style.transform = 'translateX(0)';
+        notification.style.opacity = '1';
+    });
+    
+    // Track timeout for cleanup
+    const timeout = setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        notification.style.opacity = '0';
+        
+        const removeTimeout = setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+            isDisplayingNotification = false;
+            notificationTimeouts.delete(timeout);
+            notificationTimeouts.delete(removeTimeout);
+            displayNextNotification();
+        }, 300);
+        
+        notificationTimeouts.add(removeTimeout);
+    }, 3000);
+    
+    notificationTimeouts.add(timeout);
+}
+
+
+// Get notification icon
+function getNotificationIcon(type) {
+    const icons = {
+        success: 'check-circle',
+        error: 'exclamation-circle',
+        warning: 'exclamation-triangle',
+        info: 'info-circle'
+    };
+    return icons[type] || 'info-circle';
+}
+
+// Show error
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = message ? 'block' : 'none';
+    }
+    if (message) {
+        showNotification(message, 'error');
+    }
+}
+
+// Toggle dark mode
+function toggleDarkMode() {
+    const body = document.body;
+    const isDarkMode = body.classList.toggle('dark-mode');
+    body.classList.toggle('light-mode', !isDarkMode);
+    
+    // Save preference
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    // Update data settings
+    if (window.data && window.data.settings) {
+        window.data.settings.theme = isDarkMode ? 'dark' : 'light';
+    }
+    
+    // Update menu item
+    const menuItem = document.querySelector('.dropdown-item[onclick="toggleDarkMode()"]');
+    if (menuItem) {
+        menuItem.innerHTML = `<i class="fas fa-${isDarkMode ? 'sun' : 'moon'} me-2"></i>Toggle ${isDarkMode ? 'Light' : 'Dark'} Mode`;
+    }
+    
+    // Update tables
+    const tables = document.querySelectorAll('.table');
+    tables.forEach(table => {
+        table.classList.toggle('table-dark', isDarkMode);
+    });
+    
+    // Update charts
+    if (typeof window.updateChartColors === 'function') {
+        window.updateChartColors(isDarkMode);
+        if (window.charts) {
+            Object.values(window.charts).forEach(chart => chart?.update());
+        }
+    }
+    
+    showNotification(`${isDarkMode ? 'Dark' : 'Light'} mode activated`, 'success');
+}
+
+// Toggle sidebar
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    
+    const isActive = sidebar.classList.toggle('active');
+    
+    // Save preference
+    localStorage.setItem('sidebarActive', isActive);
+    
+    // Adjust main content
+    if (window.innerWidth > 768) {
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.marginLeft = isActive ? '320px' : '0';
+        }
+    }
+}
+
+// Show monthly details
 function showMonthlyDetails(date) {
     const sortedRecords = [...historicalNetWorth].sort((a, b) => new Date(b.date) - new Date(a.date));
     const recordIndex = sortedRecords.findIndex(r => r.date === date);
@@ -291,20 +564,66 @@ function showMonthlyDetails(date) {
     modal.show();
 }
 
+// Debug version of updateMonthlyRecordsTable
 function updateMonthlyRecordsTable() {
+    console.log('=== UPDATE MONTHLY RECORDS TABLE DEBUG START ===');
+    console.log('1. Function called');
+    console.log('   - historicalNetWorth length:', historicalNetWorth?.length || 0);
+    console.log('   - window.historicalNetWorth length:', window.historicalNetWorth?.length || 0);
+    console.log('   - Are they same reference?', historicalNetWorth === window.historicalNetWorth);
+    
     const tbody = document.querySelector('#monthlyRecords tbody');
+    if (!tbody) {
+        console.error('ERROR: Monthly records tbody not found');
+        return;
+    }
+    console.log('2. Table tbody found');
+    
+    console.log('3. Current historicalNetWorth data:');
+    if (historicalNetWorth && historicalNetWorth.length > 0) {
+        historicalNetWorth.forEach((record, index) => {
+            const date = new Date(record.date);
+            console.log(`   [${index}] ${date.toLocaleDateString()} - Net Worth: ${record.netWorth}`);
+        });
+    } else {
+        console.log('   - No historical data found');
+    }
+    
     tbody.innerHTML = '';
+    
+    if (!historicalNetWorth || historicalNetWorth.length === 0) {
+        console.log('4. No data - showing empty message');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    No monthly records yet. Click "Save Monthly Record" to start tracking.
+                </td>
+            </tr>
+        `;
+        console.log('=== UPDATE MONTHLY RECORDS TABLE DEBUG END (NO DATA) ===');
+        return;
+    }
+    
     const sortedRecords = [...historicalNetWorth].sort((a, b) => new Date(b.date) - new Date(a.date));
+    console.log('4. Sorted records for display:');
+    sortedRecords.forEach((record, index) => {
+        const date = new Date(record.date);
+        console.log(`   [${index}] ${date.toLocaleDateString()} - Net Worth: ${record.netWorth}`);
+    });
+    
+    console.log('5. Creating table rows...');
     sortedRecords.forEach((record, index) => {
         const row = document.createElement('tr');
         const date = new Date(record.date);
         const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
         let change = '0%';
         if (index < sortedRecords.length - 1) {
             const prevNetWorth = sortedRecords[index + 1].netWorth;
             const changePercent = ((record.netWorth - prevNetWorth) / prevNetWorth) * 100;
             change = `${changePercent.toFixed(1)}%`;
         }
+        
         let status = 'Current';
         if (index > 0) {
             const today = new Date();
@@ -312,336 +631,298 @@ function updateMonthlyRecordsTable() {
             const monthDiff = (today.getFullYear() - recordDate.getFullYear()) * 12 + (today.getMonth() - recordDate.getMonth());
             if (monthDiff > 0) status = 'Locked';
         }
+        
+        console.log(`   Creating row for ${monthYear} - Net Worth: ${window.formatCurrency ? window.formatCurrency(record.netWorth) : record.netWorth}`);
+        
         row.innerHTML = `
             <td>${monthYear}</td>
-            <td>${formatCurrency(record.netWorth)}</td>
+            <td>${window.formatCurrency ? window.formatCurrency(record.netWorth) : record.netWorth}</td>
             <td class="${change.startsWith('-') ? 'text-danger' : 'text-success'}">${change}</td>
             <td><span class="badge ${status === 'Locked' ? 'bg-secondary' : 'bg-success'}">${status}</span></td>
             <td><button class="btn btn-sm btn-primary" onclick="showMonthlyDetails('${record.date}')"><i class="fas fa-eye"></i> Details</button></td>
         `;
         tbody.appendChild(row);
     });
+    
+    console.log('6. Table rows created and added');
+    console.log('   - Final tbody children count:', tbody.children.length);
+    console.log('=== UPDATE MONTHLY RECORDS TABLE DEBUG END ===');
 }
 
-function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
-    document.body.classList.toggle('light-mode');
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode);
-    const menuItem = document.querySelector('.dropdown-item[onclick="toggleDarkMode()"]');
-    if (menuItem) {
-        menuItem.textContent = isDarkMode ? 'Toggle Light Mode' : 'Toggle Dark Mode';
+// Debug version to check the update function
+function debugUpdate() {
+    console.log('=== UPDATE FUNCTION DEBUG ===');
+    console.log('Current data.initial_cash:', data?.initial_cash);
+    console.log('Current overview net worth element:', document.getElementById('netWorth')?.value);
+    
+    // Call the actual update
+    if (typeof window.update === 'function') {
+        window.update();
     }
-    const tables = document.querySelectorAll('.table');
-    tables.forEach(table => {
-        if (isDarkMode) table.classList.add('table-dark');
-        else table.classList.remove('table-dark');
-    });
-    updateChartColors(isDarkMode);
-    Object.values(charts).forEach(chart => chart?.update());
-    showNotification('Theme switched', 'success');
+    
+    console.log('After update - data.initial_cash:', data?.initial_cash);
+    console.log('After update - overview net worth element:', document.getElementById('netWorth')?.value);
+}
+// Add delete function if missing
+function deleteMonthlyRecord(date) {
+    if (confirm('Delete this monthly record? This action cannot be undone.')) {
+        if (window.historicalNetWorth) {
+            window.historicalNetWorth = window.historicalNetWorth.filter(r => r.date !== date);
+            updateMonthlyRecordsTable();
+            
+            if (typeof window.updateHistoricalChart === 'function') {
+                window.updateHistoricalChart();
+            }
+            if (typeof window.updateInsights === 'function') {
+                window.updateInsights();
+            }
+            if (typeof window.saveData === 'function') {
+                window.saveData();
+            }
+            
+            showNotification('Monthly record deleted', 'success');
+        }
+    }
 }
 
-function showNotification(message, type) {
-    notificationQueue.push({ message, type });
-    displayNextNotification();
+// Delete monthly record
+function deleteMonthlyRecord(date) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Delete Monthly Record?',
+            text: 'This action cannot be undone',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                performRecordDeletion(date);
+            }
+        });
+    } else {
+        if (confirm('Delete this monthly record? This action cannot be undone.')) {
+            performRecordDeletion(date);
+        }
+    }
 }
 
-function displayNextNotification() {
-    if (isDisplaying || notificationQueue.length === 0) return;
-    isDisplaying = true;
-    const { message, type } = notificationQueue.shift();
-    const notif = document.createElement('div');
-    notif.className = `notification ${type}`;
-    notif.textContent = message;
-    const activeNotifs = document.querySelectorAll('.notification');
-    const offset = Array.from(activeNotifs).reduce((sum, n) => sum + n.offsetHeight + 8, 24);
-    notif.style.top = `${offset}px`;
-    document.body.appendChild(notif);
-    setTimeout(() => {
-        notif.remove();
-        isDisplaying = false;
-        displayNextNotification();
-    }, 3000);
+// Perform the actual record deletion
+function performRecordDeletion(date) {
+    if (window.historicalNetWorth) {
+        window.historicalNetWorth = window.historicalNetWorth.filter(r => r.date !== date);
+        updateMonthlyRecordsTable();
+        
+        if (typeof window.updateHistoricalChart === 'function') {
+            window.updateHistoricalChart();
+        }
+        if (typeof window.updateInsights === 'function') {
+            window.updateInsights();
+        }
+        if (typeof window.saveData === 'function') {
+            window.saveData();
+        }
+        
+        showNotification('Monthly record deleted', 'success');
+    }
 }
 
-function showError(message) {
-    const errorDiv = document.getElementById('error-message');
-    errorDiv.textContent = message;
-    errorDiv.style.display = message ? 'block' : 'none';
-    if (message) showNotification(message, 'error');
-}
-
+// Initialize cookie consent
 function initializeCookieConsent() {
-    console.log('initializeCookieConsent() called');
-
-    if (!checkAuth()) {
-        console.warn('User not authenticated — aborting cookie consent initialization.');
+    console.log('Initializing cookie consent');
+    
+    if (!window.checkAuth || !window.checkAuth()) {
+        console.warn('User not authenticated - skipping cookie consent');
         return;
     }
-
-    const email = getCurrentUser();
-    console.log('Current user email:', email);
-
+    
+    const email = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!email) {
-        console.warn('No user email found — cannot proceed with cookie consent.');
+        console.warn('No user email found');
         return;
     }
-
+    
     const consentKey = `cookieConsent_${email}`;
     const consent = localStorage.getItem(consentKey);
-    console.log(`Consent key: ${consentKey}, Consent value:`, consent);
-
     const cookieConsentPopup = document.getElementById('cookieConsent');
+    
     if (!cookieConsentPopup) {
-        console.error('Cookie consent popup element not found in DOM.');
+        console.error('Cookie consent popup element not found');
         return;
     }
-
+    
     if (consent) {
         const settings = JSON.parse(consent);
-        console.log('Existing cookie consent settings found:', settings);
         applyCookieSettings(settings);
         hasCookieConsent = true;
-        console.log('hasCookieConsent set to true');
+        cookieConsentPopup.style.display = 'none';
     } else {
-        cookieConsentPopup.style.display = 'block';
+        cookieConsentPopup.style.display = 'flex';
         hasCookieConsent = false;
-        console.log('No consent found — showing popup and setting hasCookieConsent to false');
     }
 }
 
-
-
-
+// Accept cookies
 function acceptCookies() {
-    console.log('acceptCookies() called');
-    const email = getCurrentUser();
+    const email = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!email) return;
-
-    const consentKey = `cookieConsent_${email}`;
-    const settings = { necessary: true, analytics: true, timestamp: new Date().toISOString() };
-    localStorage.setItem(consentKey, JSON.stringify(settings));
-    document.getElementById('cookieConsent').style.display = 'none';
-    applyCookieSettings(settings);
-    showNotification('Cookies accepted', 'success');
-    hasCookieConsent = true;  // consent given, so allow saving
-    console.log(' hasCookieConsent is true now:', hasCookieConsent);
-}
-
-function declineCookies() {
-    console.log('declineCookies() called');
-    const email = getCurrentUser();
-    if (!email) return;
-
-    const consentKey = `cookieConsent_${email}`;
-    const settings = { necessary: false, analytics: false, timestamp: new Date().toISOString() };
-    localStorage.setItem(consentKey, JSON.stringify(settings));
-    document.getElementById('cookieConsent').style.display = 'none';
-    applyCookieSettings(settings);
-    showNotification('Cookies declined; saving and importing disabled', 'error');
-    hasCookieConsent = false;  // consent denied, so block saving
-}
-
-
-
-function showCookieSettings() {
-    console.log('showCookieSettings() called');
-    const email = getCurrentUser();
-    if (!email) return;
-
-    const consentKey = `cookieConsent_${email}`;
-    const existingConsent = localStorage.getItem(consentKey);
-
-    if (existingConsent) {
-        const settings = JSON.parse(existingConsent);
-        document.getElementById('analyticsCookies').checked = settings.analytics;
-        const necessaryCheckbox = document.getElementById('necessaryCookies');
-        if (necessaryCheckbox) necessaryCheckbox.checked = settings.necessary;
-    }
-
-    const modal = new bootstrap.Modal(document.getElementById('cookieSettingsModal'));
-    modal.show();
-}
-
-
-function saveCookieSettings() {
-    console.log('saveCookieSettings() called');
-    const email = getCurrentUser();
-    if (!email) return;
-
+    
     const consentKey = `cookieConsent_${email}`;
     const settings = {
-        necessary: document.getElementById('necessaryCookies') ? document.getElementById('necessaryCookies').checked : true,
-        analytics: document.getElementById('analyticsCookies').checked,
+        necessary: true,
+        analytics: true,
+        performance: true,
         timestamp: new Date().toISOString()
     };
+    
     localStorage.setItem(consentKey, JSON.stringify(settings));
-
-    const modal = bootstrap.Modal.getInstance(document.getElementById('cookieSettingsModal'));
-    modal.hide();
-    document.getElementById('cookieConsent').style.display = 'none';
+    const cookieConsent = document.getElementById('cookieConsent');
+    if (cookieConsent) {
+        cookieConsent.style.display = 'none';
+    }
     applyCookieSettings(settings);
-    showNotification('Cookie settings saved', 'success');
     hasCookieConsent = true;
+    
+    showNotification('Cookie preferences saved', 'success');
+    
+    // Start auto-save
+    if (typeof window.startAutoSave === 'function') {
+        window.startAutoSave();
+    }
 }
 
+// Decline cookies
+function declineCookies() {
+    const email = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!email) return;
+    
+    const consentKey = `cookieConsent_${email}`;
+    const settings = {
+        necessary: false,
+        analytics: false,
+        performance: false,
+        timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem(consentKey, JSON.stringify(settings));
+    const cookieConsent = document.getElementById('cookieConsent');
+    if (cookieConsent) {
+        cookieConsent.style.display = 'none';
+    }
+    applyCookieSettings(settings);
+    hasCookieConsent = false;
+    
+    showNotification('Cookies declined - data saving disabled', 'warning');
+}
 
+// Show cookie settings
+function showCookieSettings() {
+    const email = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!email) return;
+    
+    const consentKey = `cookieConsent_${email}`;
+    const existingConsent = localStorage.getItem(consentKey);
+    
+    if (existingConsent) {
+        const settings = JSON.parse(existingConsent);
+        const analyticsCheckbox = document.getElementById('analyticsCookies');
+        const performanceCheckbox = document.getElementById('performanceCookies');
+        
+        if (analyticsCheckbox) analyticsCheckbox.checked = settings.analytics || false;
+        if (performanceCheckbox) performanceCheckbox.checked = settings.performance || false;
+    }
+    
+    const modal = document.getElementById('cookieSettingsModal');
+    if (modal && typeof bootstrap !== 'undefined') {
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
+}
+
+// Save cookie settings
+function saveCookieSettings() {
+    const email = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!email) return;
+    
+    const consentKey = `cookieConsent_${email}`;
+    const analyticsCheckbox = document.getElementById('analyticsCookies');
+    const performanceCheckbox = document.getElementById('performanceCookies');
+    
+    const settings = {
+        necessary: true,
+        analytics: analyticsCheckbox ? analyticsCheckbox.checked : false,
+        performance: performanceCheckbox ? performanceCheckbox.checked : false,
+        timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem(consentKey, JSON.stringify(settings));
+    
+    const modal = document.getElementById('cookieSettingsModal');
+    if (modal && typeof bootstrap !== 'undefined') {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) bsModal.hide();
+    }
+    
+    const cookieConsent = document.getElementById('cookieConsent');
+    if (cookieConsent) {
+        cookieConsent.style.display = 'none';
+    }
+    
+    applyCookieSettings(settings);
+    hasCookieConsent = true;
+    
+    showNotification('Cookie preferences updated', 'success');
+    
+    // Start auto-save if necessary cookies enabled
+    if (settings.necessary && typeof window.startAutoSave === 'function') {
+        window.startAutoSave();
+    }
+}
+
+// Apply cookie settings
 function applyCookieSettings(settings) {
-    console.log('applyCookieSettings() called');
-    if (!settings.analytics) console.log('Analytics cookies disabled');
-    if (!settings.necessary) console.log('Necessary cookies disabled; localStorage operations restricted');
-}
-
-
-function getCurrentUser() {
-    console.log('getCurrentUser: Function called');
-    const email = localStorage.getItem('financeLoggedInUserEmail');
-    console.log('getCurrentUser: Retrieved email from localStorage:', email);
-    return email ? email : null;
-}
-
-
-function getCurrentUserFullName() {
-    console.log('getCurrentUserFullName: Function called');
-    const fullName = localStorage.getItem('financeLoggedInUserFullName');
-    return fullName ? JSON.parse(fullName) : null;
-}
-
-
-function logout() {
-    console.log('logout() called');
-    const email = getCurrentUser();
-    if (email) {
-        const prefix = `financeData_${email}_`;
-
-        // Iterate backwards safely and remove matching keys
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            console.log("Checking key: ", key);
-            if (key && key.startsWith(prefix)) {
-                console.log("Removing key: ", key);
-                localStorage.removeItem(key);
-            }
+    console.log('Applying cookie settings:', settings);
+    
+    // Update global variable
+    window.hasCookieConsent = settings.necessary;
+    hasCookieConsent = settings.necessary;
+    
+    if (!settings.analytics) {
+        console.log('Analytics cookies disabled');
+    }
+    
+    if (!settings.performance) {
+        console.log('Performance cookies disabled');
+    }
+    
+    if (!settings.necessary) {
+        console.log('Necessary cookies disabled - data saving restricted');
+        if (typeof window.stopAutoSave === 'function') {
+            window.stopAutoSave();
         }
-
-        // Remove consent key
-        localStorage.removeItem(`cookieConsent_${email}`);
-    }
-
-    // Remove session info
-    localStorage.removeItem('financeLoggedInUserEmail');
-    localStorage.removeItem('financeLoggedInUserFullName');
-    localStorage.removeItem('token');
-    
-    showNotification('Logged out successfully', 'success');
-    setTimeout(() => { window.location.href = '/finance_tracker_pro_frontend/'; }, 1000);
-}
-
-
-
-
-
-function showChangePasswordModal() {
-    const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
-    document.getElementById('currentPassword').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmNewPassword').value = '';
-    modal.show();
-}
-
-async function changePassword() {
-    console.log('changePassword function called');
-    const currentPassword = document.getElementById('currentPassword').value.trim();
-    const newPassword = document.getElementById('newPassword').value.trim();
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value.trim();
-
-    if (!currentPassword || !newPassword || !confirmNewPassword) {
-        showNotification('Please fill in all fields', 'error');
-        console.log('Validation failed: Missing fields');
-        return;
-    }
-
-    if (newPassword !== confirmNewPassword) {
-        showNotification('New passwords do not match', 'error');
-        console.log('Validation failed: Passwords do not match');
-        return;
-    }
-
-    const email = getCurrentUser();
-    console.log('Current user email:', email);
-    if (!email) {
-        showNotification('No user logged in', 'error');
-        console.log('No user logged in');
-        return;
-    }
-
-    try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            showNotification('You are not logged in', 'error');
-            return;
-        }
-    
-        const response = await fetch('https://finance-tracker-pro-server.onrender.com/api/change-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
-            body: JSON.stringify({
-                email: email,
-                currentPassword: currentPassword,
-                newPassword: newPassword
-            })
-        });
-    
-        const result = await response.json();
-        console.log('Password change response:', result);
-    
-        if (response.ok) {
-            const modalElement = document.getElementById('changePasswordModal');
-            const modal = bootstrap.Modal.getInstance(modalElement);
-            
-            // Remove focus from any element inside modal
-            document.activeElement.blur();
-            
-            // Hide modal
-            modal.hide();
-        
-            // Optionally move focus to a known safe element
-            document.getElementById('dashboardLink')?.focus();
-        
-            showNotification('Password changed successfully', 'success');
-        } else {
-            showNotification(result.message || 'Failed to change password', 'error');
-        }
-        
-    
-    } catch (e) {
-        showNotification('Error while changing password: ' + e.message, 'error');
-        console.error('Change password error:', e);
-    }    
-}
-
-function toggleSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  sidebar.classList.toggle('active');
-  document.body.classList.toggle('sidebar-active');
-}
-
-function togglePassword(id) {
-    const input = document.getElementById(id);
-    const icon = input.nextElementSibling.querySelector('i');
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.className = 'fas fa-eye';
-    } else {
-        input.type = 'password';
-        icon.className = 'fas fa-eye-slash';
     }
 }
 
-window.togglePassword = togglePassword;
-window.showChangePasswordModal = showChangePasswordModal;
-window.changePassword = changePassword;
+// Export all UI functions to global scope
+window.toggleSection = toggleSection;
+window.addRow = addRow;
+window.addGoal = addGoal;
+window.removeRow = removeRow;
+window.handleInvestmentChange = handleInvestmentChange;
+window.showNotification = showNotification;
+window.showError = showError;
+window.toggleDarkMode = toggleDarkMode;
+window.toggleSidebar = toggleSidebar;
+window.showMonthlyDetails = showMonthlyDetails;
+window.updateMonthlyRecordsTable = updateMonthlyRecordsTable;
+window.deleteMonthlyRecord = deleteMonthlyRecord;
+window.initializeCookieConsent = initializeCookieConsent;
+window.acceptCookies = acceptCookies;
+window.declineCookies = declineCookies;
+window.showCookieSettings = showCookieSettings;
+window.saveCookieSettings = saveCookieSettings;
+window.hasCookieConsent = hasCookieConsent;
+window.updateMonthlyRecordsTable = updateMonthlyRecordsTable;
+window.deleteMonthlyRecord = deleteMonthlyRecord;
