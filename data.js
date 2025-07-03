@@ -52,7 +52,8 @@ function getUserDataKey() {
 // Enhanced save data with retry logic
 async function saveData() {
     console.log('saveData: Starting save operation');
-    
+    console.log('saveData: Current data before sending:', data);
+    console.log('saveData: Current historicalNetWorth before sending:', historicalNetWorth);
     // Check if hasCookieConsent is available
     const consentCheck = typeof window.hasCookieConsent !== 'undefined' ? window.hasCookieConsent : true;
     
