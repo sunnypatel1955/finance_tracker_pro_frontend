@@ -1,694 +1,1146 @@
+// Add at the very beginning of script.js
+console.log('Starting with performance optimizations...');
+
+// Global cleanup on errors
+window.addEventListener('error', function(event) {
+    console.error('Global error caught:', event.error);
+    // Attempt recovery
+    if (event.error && event.error.message && event.error.message.includes('memory')) {
+        cleanupResources();
+    }
+});
+// Enhanced Main Application Script
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('Finance Tracker Pro - Initializing...');
+    
+    // Check authentication
+    if (!checkAuth()) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    // Initialize UI
+    initializeUI();
+    
+    // Load user data
+    await loadUserData();
+    
+    // Initialize charts
+    initCharts();
+    
+    // Initialize features
+    initializeFeatures();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Initialize cookie consent
+    initializeCookieConsent();
+    
+    // Start auto-save if enabled
+    if (data.settings?.autoSave && hasCookieConsent) {
+        startAutoSave();
+    }
+    
+    console.log('Finance Tracker Pro - Ready!');
+});
+
+// Check authentication
 function checkAuth() {
-    console.log('checkAuth function called');
     const token = localStorage.getItem('token');
-    if (!token) {
-        showNotification('Please log in to access the app', 'error');
-        setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+    const email = localStorage.getItem('financeLoggedInUserEmail');
+    
+    if (!token || !email) {
+        console.warn('Authentication check failed');
         return false;
     }
-    // Optionally, add token expiry check here if you want
-
+    
+    // Verify token is not expired (simple check)
+    try {
+        const tokenData = JSON.parse(atob(token.split('.')[1]));
+        if (tokenData.exp && tokenData.exp * 1000 < Date.now()) {
+            console.warn('Token expired');
+            localStorage.removeItem('token');
+            localStorage.removeItem('financeLoggedInUserEmail');
+            return false;
+        }
+    } catch (e) {
+        console.error('Invalid token format');
+        return false;
+    }
+    
     return true;
 }
 
-
-function startAutoSave() {
-    setInterval(() => { if (hasCookieConsent) saveData(); }, 5 * 60 * 1000);
+// Initialize UI elements
+function initializeUI() {
+    console.log('Initializing UI...');
+    
+    // Set user name
+    const fullName = localStorage.getItem('financeLoggedInUserFullName') || 'User';
+    const userNameElement = document.getElementById('userName');
+    if (userNameElement) {
+        userNameElement.textContent = `Welcome, ${fullName}!`;
+    }
+    
+    // Apply saved theme
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === 'false') {
+        document.body.classList.remove('dark-mode');
+        document.body.classList.add('light-mode');
+    }
+    
+    // Apply saved sidebar state
+    const sidebarState = localStorage.getItem('sidebarActive');
+    if (sidebarState === 'true') {
+        document.getElementById('sidebar').classList.add('active');
+        if (window.innerWidth > 768) {
+            document.querySelector('.main-content').style.marginLeft = '320px';
+        }
+    }
+    
+    // Initialize tooltips
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+    
+    // Initialize popovers
+    const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
+    popovers.forEach(popover => new bootstrap.Popover(popover));
 }
 
-function formatCurrency(amount, forPDF = false) {
+// Load user data
+async function loadUserData() {
+    console.log('Loading user data...');
+    
+    showLoadingState(true);
+    
+    try {
+        // Load data from server or local storage
+        const loaded = await loadData();
+        
+        if (!loaded) {
+            console.log('No existing data found, starting fresh');
+            showNotification('Welcome! Start by adding your financial data.', 'info');
+        }
+        
+        // Update all calculations
+        update();
+        
+        // Update monthly records
+        updateMonthlyRecordsTable();
+        
+        // Update insights
+        updateInsights();
+        
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showNotification('Error loading data. Please refresh the page.', 'error');
+    } finally {
+        showLoadingState(false);
+    }
+}
+
+// Initialize features
+function initializeFeatures() {
+    console.log('Initializing features...');
+    
+    // Initialize date/time display
+    updateDateTime();
+    setInterval(updateDateTime, 60000); // Update every minute
+    
+    // Initialize keyboard shortcuts
+    initializeKeyboardShortcuts();
+    
+    // Initialize drag and drop for file import
+    initializeDragAndDrop();
+    
+    // Check for unsaved changes warning
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges()) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // Currency change
     const currencySelect = document.getElementById('currency');
-    const currency = forPDF ? 'USD' : (currencySelect ? currencySelect.value : 'USD');
-    const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: currency });
+    if (currencySelect) {
+        currencySelect.addEventListener('change', function() {
+            updateCurrencyDisplay();
+            debouncedUpdate();
+        });
+    }
+    
+    // Sidebar toggle on mobile
+    if (window.innerWidth <= 768) {
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.sidebar-toggle');
+            
+            if (!sidebar.contains(e.target) && !toggle.contains(e.target) && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+    }
+    
+    // Window resize handler
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            // Update charts on resize
+            Object.values(charts).forEach(chart => chart?.resize());
+            
+            // Adjust sidebar behavior
+            if (window.innerWidth <= 768) {
+                document.querySelector('.main-content').style.marginLeft = '0';
+            } else if (document.getElementById('sidebar').classList.contains('active')) {
+                document.querySelector('.main-content').style.marginLeft = '320px';
+            }
+        }, 250);
+    });
+}
+
+// Initialize keyboard shortcuts
+function initializeKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Check if user is typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        // Ctrl/Cmd key combinations
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key.toLowerCase()) {
+                case 's':
+                    e.preventDefault();
+                    saveData();
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    exportData();
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    addRow('investments');
+                    break;
+                case 'l':
+                    e.preventDefault();
+                    addRow('loans');
+                    break;
+                case 'g':
+                    e.preventDefault();
+                    addGoal();
+                    break;
+                case 'z':
+                    e.preventDefault();
+                    undoData();
+                    break;
+                case 'd':
+                    e.preventDefault();
+                    toggleDarkMode();
+                    break;
+            }
+        }
+        
+        // Escape key
+        if (e.key === 'Escape') {
+            // Close any open modals
+            const modals = document.querySelectorAll('.modal.show');
+            modals.forEach(modal => {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) bsModal.hide();
+            });
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('active');
+            }
+        }
+    });
+}
+
+// Initialize drag and drop
+function initializeDragAndDrop() {
+    const dropZone = document.body;
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        dropZone.classList.add('drag-highlight');
+    }
+    
+    function unhighlight(e) {
+        dropZone.classList.remove('drag-highlight');
+    }
+    
+    dropZone.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type === 'application/json') {
+                handleFileImport({ target: { files: [file] } });
+            } else {
+                showNotification('Please drop a JSON backup file', 'error');
+            }
+        }
+    }
+}
+
+// Update date/time display
+function updateDateTime() {
+    const now = new Date();
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    
+    const dateString = now.toLocaleDateString('en-US', options);
+    
+    // Update if element exists
+    const dateElement = document.getElementById('currentDate');
+    if (dateElement) {
+        dateElement.textContent = dateString;
+    }
+}
+
+// Check for unsaved changes
+function hasUnsavedChanges() {
+    // Compare current data with last saved data
+    if (!previousData) return false;
+    
+    return JSON.stringify(data) !== JSON.stringify(previousData);
+}
+
+// Format currency based on selected currency
+function formatCurrency(amount, forceUSD = false) {
+    const currencySelect = document.getElementById('currency');
+    const currency = forceUSD ? 'USD' : (currencySelect ? currencySelect.value : 'INR');
+    
+    const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    });
+    
     return formatter.format(amount);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded event triggered');
-    if (!checkAuth()) return;
-    initializeCookieConsent();
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    if (!isDarkMode) toggleDarkMode();
-    const tables = document.querySelectorAll('.table');
-    tables.forEach(table => {
-        if (document.body.classList.contains('dark-mode')) table.classList.add('table-dark');
+// Update currency display
+function updateCurrencyDisplay() {
+    const currency = document.getElementById('currency').value;
+    
+    // Update all currency displays
+    update();
+    updateAllCharts();
+}
+
+// Logout function
+function logout() {
+    Swal.fire({
+        title: 'Logout',
+        text: 'Are you sure you want to logout?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, logout',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Clear authentication data
+            localStorage.removeItem('token');
+            localStorage.removeItem('financeLoggedInUserEmail');
+            localStorage.removeItem('financeLoggedInUserFullName');
+            localStorage.removeItem('rememberToken');
+            
+            // Stop auto-save
+            stopAutoSave();
+            
+            // Redirect to login
+            window.location.href = 'index.html';
+        }
     });
-    initCharts();
-    loadData();
+}
 
-    // Show full name in userName div
-    const loggedInUser = localStorage.getItem('financeLoggedInUserFullName');
-    if (loggedInUser) {
-        document.getElementById('userName').textContent = `Welcome, ${loggedInUser}`;
-    }
-
-}); // <--- make sure this closing brace and parenthesis is here
-
-    // Wait for debouncedUpdate and update to be defined
-    function setupEventListeners() {
-        console.log('setupEventListeners function called');
-        if (typeof debouncedUpdate === 'function' && typeof update === 'function') {
-            const allInputs = document.querySelectorAll('input, select');
-            allInputs.forEach(input => {
-                input.addEventListener('input', debouncedUpdate);
-            });
-            const calculateBtn = document.querySelector('button[onclick="calculate()"]');
-            if (calculateBtn) {
-                calculateBtn.addEventListener('click', calculate);
-            }
-            calculate(); // Initial calculation
-        } else {
-            setTimeout(setupEventListeners, 100); // Retry after 100ms
-        }
-    }
-    setupEventListeners();
-
-    startAutoSave();
-
-
-// Rest of the export functions (exportToExcel, exportToCSV, exportToPDF, exportToJSON) remain unchanged
+// Export data
 function exportData() {
-    if (!checkAuth()) return;
-    const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
-    exportModal.show();
+    const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+    modal.show();
 }
 
-// [Include the unchanged exportToExcel, exportToCSV, exportToPDF, exportToJSON functions here]
-// Enhanced Export Functions for Finance Tracker Pro
-
-class FinanceExporter {
-    constructor(data, historicalNetWorth, formatCurrency, showNotification, showError) {
-        this.data = data;
-        this.historicalNetWorth = historicalNetWorth;
-        this.formatCurrency = formatCurrency;
-        this.showNotification = showNotification;
-        this.showError = showError;
-        this.CURRENT_DATA_VERSION = '1.0'; // Define this constant
-    }
-
-    // Utility methods
-    generateFilename(extension) {
-        const timestamp = new Date().toISOString().split('T')[0];
-        return `finance_report_${timestamp}.${extension}`;
-    }
-
-    calculateTotals() {
-        return {
-            totalInvestments: this.data.investments?.reduce((sum, i) => sum + (i.value || 0), 0) || 0,
-            totalLoans: this.data.loans?.reduce((sum, l) => sum + (l.value || 0), 0) || 0,
-            totalIncome: this.data.income?.reduce((sum, s) => sum + (s.value || 0), 0) || 0,
-            totalExpenses: this.data.expenses?.reduce((sum, e) => sum + (e.value || 0), 0) || 0
-        };
-    }
-
-    generateOverviewData() {
-        const totals = this.calculateTotals();
-        const netWorth = (this.data.initial_cash || 0) + totals.totalInvestments - totals.totalLoans;
-        const monthlySavings = totals.totalIncome - totals.totalExpenses;
-        const savingsRate = totals.totalIncome > 0 ? ((monthlySavings / totals.totalIncome) * 100).toFixed(1) : 0;
-
-        return {
-            ...totals,
-            liquidCash: this.data.initial_cash || 0,
-            netWorth,
-            monthlySavings,
-            savingsRate
-        };
-    }
-
-    // Excel Export with improved formatting
-    async exportToExcel() {
-        try {
-            if (!window.XLSX) {
-                throw new Error('XLSX library not loaded');
-            }
-
-            const wb = XLSX.utils.book_new();
-            const overview = this.generateOverviewData();
-
-            // Enhanced Overview Sheet
-            const overviewData = [
-                ['Finance Report Overview', ''],
-                ['Generated on', new Date().toLocaleDateString()],
-                ['', ''],
-                ['Category', 'Amount'],
-                ['Net Worth', overview.netWorth],
-                ['Liquid Cash', overview.liquidCash],
-                ['Total Investments', overview.totalInvestments],
-                ['Total Loans', overview.totalLoans],
-                ['Monthly Income', overview.totalIncome],
-                ['Monthly Expenses', overview.totalExpenses],
-                ['Monthly Savings', overview.monthlySavings],
-                ['Savings Rate (%)', parseFloat(overview.savingsRate)]
+// Export to Excel
+async function exportToExcel() {
+    try {
+        showLoadingState(true);
+        
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Overview sheet
+        const overviewData = [
+            ['Finance Tracker Pro - Financial Report'],
+            ['Generated on:', new Date().toLocaleString()],
+            [''],
+            ['Overview'],
+            ['Liquid Cash:', data.initial_cash],
+            ['Total Investments:', data.investments.reduce((sum, i) => sum + i.value, 0)],
+            ['Total Loans:', data.loans.reduce((sum, l) => sum + l.value, 0)],
+            ['Net Worth:', data.initial_cash + data.investments.reduce((sum, i) => sum + i.value, 0) - data.loans.reduce((sum, l) => sum + l.value, 0)],
+            [''],
+            ['Monthly Cash Flow'],
+            ['Total Income:', data.income.reduce((sum, i) => sum + i.value, 0)],
+            ['Total Expenses:', data.expenses.reduce((sum, e) => sum + e.value, 0)],
+            ['Net Savings:', data.income.reduce((sum, i) => sum + i.value, 0) - data.expenses.reduce((sum, e) => sum + e.value, 0)]
+        ];
+        
+        const wsOverview = XLSX.utils.aoa_to_sheet(overviewData);
+        XLSX.utils.book_append_sheet(wb, wsOverview, 'Overview');
+        
+        // Investments sheet
+        if (data.investments.length > 0) {
+            const investmentsData = [
+                ['Investment Name', 'Value', 'Expected Return (%)', 'Risk Level', 'Notes'],
+                ...data.investments.map(inv => [
+                    inv.name,
+                    inv.value,
+                    inv.return,
+                    inv.risk,
+                    inv.remark
+                ])
             ];
-
-            const overviewSheet = XLSX.utils.aoa_to_sheet(overviewData);
-            
-            // Style the overview sheet
-            overviewSheet['!cols'] = [{ width: 20 }, { width: 15 }];
-            overviewSheet['A1'].s = { font: { bold: true, sz: 14 } };
-            
-            XLSX.utils.book_append_sheet(wb, overviewSheet, 'Overview');
-
-            // Enhanced Investments Sheet
-            if (this.data.investments?.length > 0) {
-                const investmentsData = [
-                    ['Investment Portfolio Analysis', '', '', '', ''],
-                    ['Name', 'Value', 'Expected Return (%)', 'Risk Level', 'Remark'],
-                    ...this.data.investments.map(i => [
-                        i.name || 'Unnamed',
-                        i.value || 0,
-                        i.return || 0,
-                        i.risk || 'Unknown',
-                        i.remark || ''
-                    ])
-                ];
-                
-                const investmentsSheet = XLSX.utils.aoa_to_sheet(investmentsData);
-                investmentsSheet['!cols'] = [{ width: 20 }, { width: 12 }, { width: 15 }, { width: 12 }, { width: 25 }];
-                XLSX.utils.book_append_sheet(wb, investmentsSheet, 'Investments');
-            }
-
-            // Enhanced Loans Sheet
-            if (this.data.loans?.length > 0) {
-                const loansData = [
-                    ['Loans & Liabilities', '', '', ''],
-                    ['Name', 'Outstanding Amount', 'Annual Interest (%)', 'Remark'],
-                    ...this.data.loans.map(l => [
-                        l.name || 'Unnamed',
-                        l.value || 0,
-                        l.interest || 0,
-                        l.remark || ''
-                    ])
-                ];
-                
-                const loansSheet = XLSX.utils.aoa_to_sheet(loansData);
-                loansSheet['!cols'] = [{ width: 20 }, { width: 18 }, { width: 18 }, { width: 25 }];
-                XLSX.utils.book_append_sheet(wb, loansSheet, 'Loans');
-            }
-
-            // Enhanced Income Sheet
-            if (this.data.income?.length > 0) {
-                const incomeData = [
-                    ['Income Sources', '', ''],
-                    ['Source', 'Monthly Amount', 'Remark'],
-                    ...this.data.income.map(s => [
-                        s.name || 'Unnamed',
-                        s.value || 0,
-                        s.remark || ''
-                    ])
-                ];
-                
-                const incomeSheet = XLSX.utils.aoa_to_sheet(incomeData);
-                incomeSheet['!cols'] = [{ width: 20 }, { width: 15 }, { width: 25 }];
-                XLSX.utils.book_append_sheet(wb, incomeSheet, 'Income');
-            }
-
-            // Enhanced Expenses Sheet
-            if (this.data.expenses?.length > 0) {
-                const expensesData = [
-                    ['Monthly Expenses', '', '', ''],
-                    ['Category', 'Type', 'Monthly Amount', 'Remark'],
-                    ...this.data.expenses.map(e => [
-                        e.name || 'Unnamed',
-                        e.type || 'General',
-                        e.value || 0,
-                        e.remark || ''
-                    ])
-                ];
-                
-                const expensesSheet = XLSX.utils.aoa_to_sheet(expensesData);
-                expensesSheet['!cols'] = [{ width: 20 }, { width: 12 }, { width: 15 }, { width: 25 }];
-                XLSX.utils.book_append_sheet(wb, expensesSheet, 'Expenses');
-            }
-
-            // Enhanced Goals Sheet
-            if (this.data.goals?.length > 0) {
-                const goalsData = [
-                    ['Financial Goals', '', ''],
-                    ['Name', 'Target Amount', 'Timeline'],
-                    ...this.data.goals.map(g => [
-                        g.name || 'Unnamed',
-                        g.target || 0,
-                        g.time || 'Not specified'
-                    ])
-                ];
-                
-                const goalsSheet = XLSX.utils.aoa_to_sheet(goalsData);
-                goalsSheet['!cols'] = [{ width: 20 }, { width: 15 }, { width: 15 }];
-                XLSX.utils.book_append_sheet(wb, goalsSheet, 'Goals');
-            }
-
-            // Enhanced Historical Data Sheet
-            if (this.historicalNetWorth?.length > 0) {
-                const historicalData = [
-                    ['Historical Performance', '', '', '', '', '', ''],
-                    ['Date', 'Net Worth', 'Cash', 'Investments', 'Loans', 'Income', 'Expenses'],
-                    ...this.historicalNetWorth.map(h => [
-                        new Date(h.date).toLocaleDateString(),
-                        h.netWorth || 0,
-                        h.cash || 0,
-                        h.investments?.reduce((sum, i) => sum + (i.amount || 0), 0) || 0,
-                        h.loans?.reduce((sum, l) => sum + (l.amount || 0), 0) || 0,
-                        h.income?.reduce((sum, i) => sum + (i.amount || 0), 0) || 0,
-                        h.expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0
-                    ])
-                ];
-                
-                const historicalSheet = XLSX.utils.aoa_to_sheet(historicalData);
-                historicalSheet['!cols'] = Array(7).fill({ width: 12 });
-                XLSX.utils.book_append_sheet(wb, historicalSheet, 'Historical Data');
-            }
-
-            XLSX.writeFile(wb, this.generateFilename('xlsx'));
-            this.showNotification('Excel report generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Excel export error:', error);
-            this.showError(`Failed to export Excel: ${error.message}`);
+            const wsInvestments = XLSX.utils.aoa_to_sheet(investmentsData);
+            XLSX.utils.book_append_sheet(wb, wsInvestments, 'Investments');
         }
-    }
-
-    // Enhanced CSV Export
-    async exportToCSV() {
-        try {
-            const overview = this.generateOverviewData();
-            let csvContent = '';
-
-            // Header
-            csvContent += `Finance Report - Generated on ${new Date().toLocaleDateString()}\n\n`;
-
-            // Overview Section
-            csvContent += 'FINANCIAL OVERVIEW\n';
-            csvContent += 'Category,Amount\n';
-            csvContent += `Net Worth,${overview.netWorth}\n`;
-            csvContent += `Liquid Cash,${overview.liquidCash}\n`;
-            csvContent += `Total Investments,${overview.totalInvestments}\n`;
-            csvContent += `Total Loans,${overview.totalLoans}\n`;
-            csvContent += `Monthly Income,${overview.totalIncome}\n`;
-            csvContent += `Monthly Expenses,${overview.totalExpenses}\n`;
-            csvContent += `Monthly Savings,${overview.monthlySavings}\n`;
-            csvContent += `Savings Rate (%),${overview.savingsRate}\n\n`;
-
-            // Investments Section
-            if (this.data.investments?.length > 0) {
-                csvContent += 'INVESTMENTS\n';
-                csvContent += 'Name,Value,Expected Return (%),Risk Level,Remark\n';
-                this.data.investments.forEach(i => {
-                    csvContent += `"${i.name || 'Unnamed'}",${i.value || 0},${i.return || 0},"${i.risk || 'Unknown'}","${i.remark || ''}"\n`;
-                });
-                csvContent += '\n';
-            }
-
-            // Loans Section
-            if (this.data.loans?.length > 0) {
-                csvContent += 'LOANS\n';
-                csvContent += 'Name,Outstanding Amount,Annual Interest (%),Remark\n';
-                this.data.loans.forEach(l => {
-                    csvContent += `"${l.name || 'Unnamed'}",${l.value || 0},${l.interest || 0},"${l.remark || ''}"\n`;
-                });
-                csvContent += '\n';
-            }
-
-            // Income Section
-            if (this.data.income?.length > 0) {
-                csvContent += 'INCOME SOURCES\n';
-                csvContent += 'Source,Monthly Amount,Remark\n';
-                this.data.income.forEach(s => {
-                    csvContent += `"${s.name || 'Unnamed'}",${s.value || 0},"${s.remark || ''}"\n`;
-                });
-                csvContent += '\n';
-            }
-
-            // Expenses Section
-            if (this.data.expenses?.length > 0) {
-                csvContent += 'EXPENSES\n';
-                csvContent += 'Category,Type,Monthly Amount,Remark\n';
-                this.data.expenses.forEach(e => {
-                    csvContent += `"${e.name || 'Unnamed'}","${e.type || 'General'}",${e.value || 0},"${e.remark || ''}"\n`;
-                });
-                csvContent += '\n';
-            }
-
-            // Goals Section
-            if (this.data.goals?.length > 0) {
-                csvContent += 'FINANCIAL GOALS\n';
-                csvContent += 'Name,Target Amount,Timeline\n';
-                this.data.goals.forEach(g => {
-                    csvContent += `"${g.name || 'Unnamed'}",${g.target || 0},"${g.time || 'Not specified'}"\n`;
-                });
-                csvContent += '\n';
-            }
-
-            // Historical Data Section
-            if (this.historicalNetWorth?.length > 0) {
-                csvContent += 'HISTORICAL DATA\n';
-                csvContent += 'Date,Net Worth,Cash,Total Investments,Total Loans,Total Income,Total Expenses\n';
-                this.historicalNetWorth.forEach(h => {
-                    const investmentsTotal = h.investments?.reduce((sum, i) => sum + (i.amount || 0), 0) || 0;
-                    const loansTotal = h.loans?.reduce((sum, l) => sum + (l.amount || 0), 0) || 0;
-                    const incomeTotal = h.income?.reduce((sum, i) => sum + (i.amount || 0), 0) || 0;
-                    const expensesTotal = h.expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
-                    
-                    csvContent += `${new Date(h.date).toLocaleDateString()},${h.netWorth || 0},${h.cash || 0},${investmentsTotal},${loansTotal},${incomeTotal},${expensesTotal}\n`;
-                });
-            }
-
-            // Download CSV
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = this.generateFilename('csv');
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-            
-            this.showNotification('CSV report generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('CSV export error:', error);
-            this.showError(`Failed to export CSV: ${error.message}`);
-        }
-    }
-
-    // Enhanced PDF Export with better formatting
-    async exportToPDF() {
-        try {
-            if (!window.jspdf) {
-                throw new Error('jsPDF library not loaded');
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const overview = this.generateOverviewData();
-            let yPos = 20;
-            const pageHeight = doc.internal.pageSize.height;
-            const margin = 20;
-
-            // Helper function to check if we need a new page
-            const checkPageBreak = (requiredSpace = 20) => {
-                if (yPos + requiredSpace > pageHeight - margin) {
-                    doc.addPage();
-                    yPos = margin;
-                }
-            };
-
-            // Title
-            doc.setFontSize(22);
-            doc.setFont(undefined, 'bold');
-            doc.text('Finance Report', margin, yPos);
-            yPos += 15;
-
-            // Generated date
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPos);
-            yPos += 20;
-
-            // Overview Section
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text('Financial Overview', margin, yPos);
-            yPos += 12;
-
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
-            const overviewItems = [
-                ['Net Worth', this.formatCurrency(overview.netWorth, true)],
-                ['Liquid Cash', this.formatCurrency(overview.liquidCash, true)],
-                ['Total Investments', this.formatCurrency(overview.totalInvestments, true)],
-                ['Total Loans', this.formatCurrency(overview.totalLoans, true)],
-                ['Monthly Income', this.formatCurrency(overview.totalIncome, true)],
-                ['Monthly Expenses', this.formatCurrency(overview.totalExpenses, true)],
-                ['Monthly Savings', this.formatCurrency(overview.monthlySavings, true)],
-                ['Savings Rate', `${overview.savingsRate}%`]
+        
+        // Income sheet
+        if (data.income.length > 0) {
+            const incomeData = [
+                ['Income Source', 'Monthly Amount', 'Notes'],
+                ...data.income.map(inc => [
+                    inc.name,
+                    inc.value,
+                    inc.remark
+                ])
             ];
-
-            overviewItems.forEach(([label, value]) => {
-                checkPageBreak();
-                doc.text(`${label}: ${value}`, margin, yPos);
-                yPos += 7;
-            });
-
-            yPos += 10;
-
-            // Investments Section
-            if (this.data.investments?.length > 0) {
-                checkPageBreak(30);
-                doc.setFontSize(16);
-                doc.setFont(undefined, 'bold');
-                doc.text('Investment Portfolio', margin, yPos);
-                yPos += 12;
-
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'normal');
-                this.data.investments.forEach(inv => {
-                    checkPageBreak();
-                    const riskColor = inv.risk === 'high' ? [255, 0, 0] : inv.risk === 'medium' ? [255, 165, 0] : [0, 128, 0];
-                    doc.setTextColor(...riskColor);
-                    doc.text(`• ${inv.name || 'Unnamed'}: ${this.formatCurrency(inv.value || 0, true)} (${inv.return || 0}% return, ${inv.risk || 'unknown'} risk)`, margin, yPos);
-                    doc.setTextColor(0, 0, 0); // Reset to black
-                    yPos += 7;
-                });
-                yPos += 10;
-            }
-
-            // Loans Section
-            if (this.data.loans?.length > 0) {
-                checkPageBreak(30);
-                doc.setFontSize(16);
-                doc.setFont(undefined, 'bold');
-                doc.text('Loans & Liabilities', margin, yPos);
-                yPos += 12;
-
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'normal');
-                this.data.loans.forEach(loan => {
-                    checkPageBreak();
-                    doc.text(`• ${loan.name || 'Unnamed'}: ${this.formatCurrency(loan.value || 0, true)} (${loan.interest || 0}% interest)`, margin, yPos);
-                    yPos += 7;
-                });
-                yPos += 10;
-            }
-
-            // Income Section
-            if (this.data.income?.length > 0) {
-                checkPageBreak(30);
-                doc.setFontSize(16);
-                doc.setFont(undefined, 'bold');
-                doc.text('Income Sources', margin, yPos);
-                yPos += 12;
-
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'normal');
-                this.data.income.forEach(inc => {
-                    checkPageBreak();
-                    doc.text(`• ${inc.name || 'Unnamed'}: ${this.formatCurrency(inc.value || 0, true)}/month`, margin, yPos);
-                    yPos += 7;
-                });
-                yPos += 10;
-            }
-
-            // Expenses Section
-            if (this.data.expenses?.length > 0) {
-                checkPageBreak(30);
-                doc.setFontSize(16);
-                doc.setFont(undefined, 'bold');
-                doc.text('Monthly Expenses', margin, yPos);
-                yPos += 12;
-
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'normal');
-                this.data.expenses.forEach(exp => {
-                    checkPageBreak();
-                    doc.text(`• ${exp.name || 'Unnamed'} (${exp.type || 'General'}): ${this.formatCurrency(exp.value || 0, true)}`, margin, yPos);
-                    yPos += 7;
-                });
-                yPos += 10;
-            }
-
-            // Goals Section
-            if (this.data.goals?.length > 0) {
-                checkPageBreak(30);
-                doc.setFontSize(16);
-                doc.setFont(undefined, 'bold');
-                doc.text('Financial Goals', margin, yPos);
-                yPos += 12;
-
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'normal');
-                this.data.goals.forEach(goal => {
-                    checkPageBreak();
-                    doc.text(`• ${goal.name || 'Unnamed'}: ${this.formatCurrency(goal.target || 0, true)} (${goal.time || 'Timeline not specified'})`, margin, yPos);
-                    yPos += 7;
-                });
-                yPos += 10;
-            }
-
-            // Historical Performance Section
-            if (this.historicalNetWorth?.length > 0) {
-                checkPageBreak(50);
-                doc.setFontSize(16);
-                doc.setFont(undefined, 'bold');
-                doc.text('Historical Performance', margin, yPos);
-                yPos += 12;
-
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'normal');
-                const sortedRecords = [...this.historicalNetWorth].sort((a, b) => new Date(b.date) - new Date(a.date));
-                const recentRecords = sortedRecords.slice(0, 10); // Last 10 records
-
-                recentRecords.forEach((record, index) => {
-                    checkPageBreak();
-                    const date = new Date(record.date);
-                    const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                    
-                    let changeText = '';
-                    if (index < sortedRecords.length - 1) {
-                        const prevNetWorth = sortedRecords[index + 1].netWorth || 0;
-                        const changePercent = prevNetWorth > 0 ? (((record.netWorth || 0) - prevNetWorth) / prevNetWorth) * 100 : 0;
-                        const changeSymbol = changePercent >= 0 ? '+' : '';
-                        changeText = ` (${changeSymbol}${changePercent.toFixed(1)}%)`;
-                    }
-                    
-                    doc.text(`${monthYear}: ${this.formatCurrency(record.netWorth || 0, true)}${changeText}`, margin, yPos);
-                    yPos += 7;
-                });
-            }
-
-            doc.save(this.generateFilename('pdf'));
-            this.showNotification('PDF report generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('PDF export error:', error);
-            this.showError(`Failed to export PDF: ${error.message}`);
-        }
-    }
-
-    // Enhanced JSON Export with metadata
-    async exportToJSON() {
-        try {
-            const overview = this.generateOverviewData();
-            const exportData = {
-                version: this.CURRENT_DATA_VERSION,
-                timestamp: new Date().toISOString(),
-                metadata: {
-                    exportedBy: 'Finance Tracker Pro',
-                    recordCount: {
-                        investments: this.data.investments?.length || 0,
-                        loans: this.data.loans?.length || 0,
-                        income: this.data.income?.length || 0,
-                        expenses: this.data.expenses?.length || 0,
-                        goals: this.data.goals?.length || 0,
-                        historicalRecords: this.historicalNetWorth?.length || 0
-                    },
-                    overview
-                },
-                data: this.data,
-                historicalNetWorth: this.historicalNetWorth
-            };
-
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
-                type: 'application/json;charset=utf-8;' 
-            });
-            
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = this.generateFilename('json');
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            
-            this.showNotification('JSON backup created successfully', 'success');
-            
-        } catch (error) {
-            console.error('JSON export error:', error);
-            this.showError(`Failed to export JSON: ${error.message}`);
-        }
-    }
-
-    // Batch export function
-    async exportAll(formats = ['excel', 'csv', 'pdf', 'json']) {
-        const results = [];
-        
-        for (const format of formats) {
-            try {
-                switch (format.toLowerCase()) {
-                    case 'excel':
-                        await this.exportToExcel();
-                        results.push({ format: 'Excel', success: true });
-                        break;
-                    case 'csv':
-                        await this.exportToCSV();
-                        results.push({ format: 'CSV', success: true });
-                        break;
-                    case 'pdf':
-                        await this.exportToPDF();
-                        results.push({ format: 'PDF', success: true });
-                        break;
-                    case 'json':
-                        await this.exportToJSON();
-                        results.push({ format: 'JSON', success: true });
-                        break;
-                    default:
-                        results.push({ format, success: false, error: 'Unknown format' });
-                }
-                
-                // Small delay between exports
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-            } catch (error) {
-                results.push({ format, success: false, error: error.message });
-            }
+            const wsIncome = XLSX.utils.aoa_to_sheet(incomeData);
+            XLSX.utils.book_append_sheet(wb, wsIncome, 'Income');
         }
         
-        const successful = results.filter(r => r.success).length;
-        const total = results.length;
-        
-        if (successful === total) {
-            this.showNotification(`All ${total} reports exported successfully`, 'success');
-        } else {
-            this.showNotification(`${successful}/${total} reports exported successfully`, 'warning');
+        // Loans sheet
+        if (data.loans.length > 0) {
+            const loansData = [
+                ['Loan Name', 'Outstanding Amount', 'Interest Rate (%)', 'Notes'],
+                ...data.loans.map(loan => [
+                    loan.name,
+                    loan.value,
+                    loan.interest,
+                    loan.remark
+                ])
+            ];
+            const wsLoans = XLSX.utils.aoa_to_sheet(loansData);
+            XLSX.utils.book_append_sheet(wb, wsLoans, 'Loans');
         }
         
-        return results;
+        // Expenses sheet
+        if (data.expenses.length > 0) {
+            const expensesData = [
+                ['Category', 'Type', 'Monthly Amount', 'Notes'],
+                ...data.expenses.map(exp => [
+                    exp.category,
+                    exp.type,
+                    exp.value,
+                    exp.remark
+                ])
+            ];
+            const wsExpenses = XLSX.utils.aoa_to_sheet(expensesData);
+            XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses');
+        }
+        
+        // Goals sheet
+        if (data.goals.length > 0) {
+            const netWorth = data.initial_cash + data.investments.reduce((sum, i) => sum + i.value, 0) - data.loans.reduce((sum, l) => sum + l.value, 0);
+            const goalsData = [
+                ['Goal Name', 'Target Amount', 'Time to Achieve', 'Progress (%)'],
+                ...data.goals.map(goal => [
+                    goal.name,
+                    goal.target,
+                    goal.time,
+                    goal.target > 0 ? Math.min((netWorth / goal.target * 100).toFixed(1), 100) : 0
+                ])
+            ];
+            const wsGoals = XLSX.utils.aoa_to_sheet(goalsData);
+            XLSX.utils.book_append_sheet(wb, wsGoals, 'Goals');
+        }
+        
+        // Historical data sheet
+        if (historicalNetWorth.length > 0) {
+            const historicalData = [
+                ['Month', 'Net Worth', 'Cash', 'Investments', 'Loans', 'Income', 'Expenses'],
+                ...historicalNetWorth.map(record => [
+                    new Date(record.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    record.netWorth,
+                    record.cash,
+                    record.totalInvestments,
+                    record.totalLoans,
+                    record.totalIncome,
+                    record.totalExpenses
+                ])
+            ];
+            const wsHistorical = XLSX.utils.aoa_to_sheet(historicalData);
+            XLSX.utils.book_append_sheet(wb, wsHistorical, 'Historical');
+        }
+        
+        // Save file
+        XLSX.writeFile(wb, `FinanceTracker_${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        showNotification('Excel report generated successfully', 'success');
+        
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+        
+    } catch (error) {
+        console.error('Export to Excel failed:', error);
+        showNotification('Failed to generate Excel report', 'error');
+    } finally {
+        showLoadingState(false);
     }
 }
 
-// Usage functions (maintain compatibility with existing code)
-function exportToExcel() {
-    const exporter = new FinanceExporter(data, historicalNetWorth, formatCurrency, showNotification, showError);
-    exporter.exportToExcel();
-}
-
+// Export to CSV
 function exportToCSV() {
-    const exporter = new FinanceExporter(data, historicalNetWorth, formatCurrency, showNotification, showError);
-    exporter.exportToCSV();
+    try {
+        const netWorth = data.initial_cash + data.investments.reduce((sum, i) => sum + i.value, 0) - data.loans.reduce((sum, l) => sum + l.value, 0);
+        
+        let csv = 'Finance Tracker Pro - CSV Export\n';
+        csv += `Generated on: ${new Date().toLocaleString()}\n\n`;
+        
+        csv += 'OVERVIEW\n';
+        csv += `Liquid Cash,${data.initial_cash}\n`;
+        csv += `Total Investments,${data.investments.reduce((sum, i) => sum + i.value, 0)}\n`;
+        csv += `Total Loans,${data.loans.reduce((sum, l) => sum + l.value, 0)}\n`;
+        csv += `Net Worth,${netWorth}\n\n`;
+        
+        if (data.investments.length > 0) {
+            csv += 'INVESTMENTS\n';
+            csv += 'Name,Value,Return %,Risk,Notes\n';
+            data.investments.forEach(inv => {
+                csv += `"${inv.name}",${inv.value},${inv.return},"${inv.risk}","${inv.remark}"\n`;
+            });
+            csv += '\n';
+        }
+        
+        if (data.income.length > 0) {
+            csv += 'INCOME\n';
+            csv += 'Source,Monthly Amount,Notes\n';
+            data.income.forEach(inc => {
+                csv += `"${inc.name}",${inc.value},"${inc.remark}"\n`;
+            });
+            csv += '\n';
+        }
+        
+        if (data.expenses.length > 0) {
+            csv += 'EXPENSES\n';
+            csv += 'Category,Type,Monthly Amount,Notes\n';
+            data.expenses.forEach(exp => {
+                csv += `"${exp.category}","${exp.type}",${exp.value},"${exp.remark}"\n`;
+            });
+        }
+        
+        // Create and download file
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `FinanceTracker_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        showNotification('CSV export completed', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+        
+    } catch (error) {
+        console.error('Export to CSV failed:', error);
+        showNotification('Failed to export CSV', 'error');
+    }
 }
 
-function exportToPDF() {
-    const exporter = new FinanceExporter(data, historicalNetWorth, formatCurrency, showNotification, showError);
-    exporter.exportToPDF();
+// Export to PDF
+async function exportToPDF() {
+    try {
+        showLoadingState(true);
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Add header
+        doc.setFontSize(20);
+        doc.setTextColor(102, 126, 234);
+        doc.text('Finance Tracker Pro - Financial Report', 20, 20);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 30);
+        
+        // Add overview
+        doc.setFontSize(16);
+        doc.setTextColor(0);
+        doc.text('Financial Overview', 20, 45);
+        
+        doc.setFontSize(12);
+        const netWorth = data.initial_cash + data.investments.reduce((sum, i) => sum + i.value, 0) - data.loans.reduce((sum, l) => sum + l.value, 0);
+        
+        let y = 55;
+        doc.text(`Liquid Cash: ${formatCurrency(data.initial_cash)}`, 20, y);
+        y += 8;
+        doc.text(`Total Investments: ${formatCurrency(data.investments.reduce((sum, i) => sum + i.value, 0))}`, 20, y);
+        y += 8;
+        doc.text(`Total Loans: ${formatCurrency(data.loans.reduce((sum, l) => sum + l.value, 0))}`, 20, y);
+        y += 8;
+        doc.setTextColor(102, 126, 234);
+        doc.text(`Net Worth: ${formatCurrency(netWorth)}`, 20, y);
+        
+        // Add monthly cash flow
+        y += 15;
+        doc.setFontSize(16);
+        doc.setTextColor(0);
+        doc.text('Monthly Cash Flow', 20, y);
+        
+        y += 10;
+        doc.setFontSize(12);
+        const totalIncome = data.income.reduce((sum, i) => sum + i.value, 0);
+        const totalExpenses = data.expenses.reduce((sum, e) => sum + e.value, 0);
+        const savings = totalIncome - totalExpenses;
+        
+        doc.text(`Total Income: ${formatCurrency(totalIncome)}`, 20, y);
+        y += 8;
+        doc.text(`Total Expenses: ${formatCurrency(totalExpenses)}`, 20, y);
+        y += 8;
+        doc.setTextColor(savings >= 0 ? 34 : 220, savings >= 0 ? 197 : 53, savings >= 0 ? 94 : 69);
+        doc.text(`Net Savings: ${formatCurrency(savings)}`, 20, y);
+        
+        // Add investment summary if exists
+        if (data.investments.length > 0) {
+            y += 15;
+            doc.setFontSize(16);
+            doc.setTextColor(0);
+            doc.text('Investment Portfolio', 20, y);
+            
+            y += 10;
+            doc.setFontSize(10);
+            
+            // Create simple table
+            const investmentData = data.investments.map(inv => [
+                inv.name,
+                formatCurrency(inv.value),
+                `${inv.return}%`,
+                inv.risk
+            ]);
+            
+            doc.autoTable({
+                startY: y,
+                head: [['Investment', 'Value', 'Return', 'Risk']],
+                body: investmentData,
+                theme: 'striped',
+                headStyles: { fillColor: [102, 126, 234] },
+                margin: { left: 20, right: 20 }
+            });
+        }
+        
+        // Save PDF
+        doc.save(`FinanceTracker_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        
+        showNotification('PDF report generated successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+        
+    } catch (error) {
+        console.error('Export to PDF failed:', error);
+        showNotification('Failed to generate PDF report', 'error');
+    } finally {
+        showLoadingState(false);
+    }
 }
 
+// Export to JSON (backup)
 function exportToJSON() {
-    const exporter = new FinanceExporter(data, historicalNetWorth, formatCurrency, showNotification, showError);
-    exporter.exportToJSON();
+    backupData();
+    bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
 }
 
-// New batch export function
-function exportAllFormats() {
-    const exporter = new FinanceExporter(data, historicalNetWorth, formatCurrency, showNotification, showError);
-    exporter.exportAll();
+// Show profile modal
+function showProfile() {
+    const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+    
+    // Update profile information
+    document.getElementById('profileName').value = localStorage.getItem('financeLoggedInUserFullName') || 'Unknown';
+    document.getElementById('profileEmail').value = localStorage.getItem('financeLoggedInUserEmail') || 'Unknown';
+    
+    // Calculate member since
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            const tokenData = JSON.parse(atob(token.split('.')[1]));
+            const memberSince = new Date(tokenData.iat * 1000);
+            document.getElementById('profileMemberSince').value = memberSince.toLocaleDateString();
+        } catch (e) {
+            document.getElementById('profileMemberSince').value = 'Unknown';
+        }
+    }
+    
+    // Calculate storage usage (approximate)
+    const dataSize = new Blob([JSON.stringify(data)]).size;
+    const historicalSize = new Blob([JSON.stringify(historicalNetWorth)]).size;
+    const totalSize = dataSize + historicalSize;
+    const totalMB = (totalSize / 1024 / 1024).toFixed(2);
+    const percentage = Math.min((totalSize / (10 * 1024 * 1024)) * 100, 100);
+    
+    document.getElementById('storageProgress').style.width = `${percentage}%`;
+    document.getElementById('storageProgress').textContent = `${percentage.toFixed(0)}%`;
+    document.querySelector('#profileModal .text-muted').textContent = `${totalMB} MB of 10 MB used`;
+    
+    modal.show();
 }
 
-// Export specific formats
-function exportSelectedFormats(formats) {
-    const exporter = new FinanceExporter(data, historicalNetWorth, formatCurrency, showNotification, showError);
-    exporter.exportAll(formats);
+// Show change password modal
+function showChangePasswordModal() {
+    const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+    document.getElementById('changePasswordForm').reset();
+    modal.show();
 }
+
+// Change password
+async function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showNotification('Please fill all fields', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 8) {
+        showNotification('New password must be at least 8 characters', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('New passwords do not match', 'error');
+        return;
+    }
+    
+    try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Password change failed');
+        }
+        
+        showNotification('Password changed successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+        document.getElementById('changePasswordForm').reset();
+        
+    } catch (error) {
+        console.error('Change password error:', error);
+        showNotification('Failed to change password', 'error');
+    }
+}
+
+// Password strength check for change password
+document.getElementById('newPassword')?.addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.getElementById('newPasswordStrengthBar');
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.match(/[a-z]+/)) strength++;
+    if (password.match(/[A-Z]+/)) strength++;
+    if (password.match(/[0-9]+/)) strength++;
+    if (password.match(/[$@#&!]+/)) strength++;
+
+    strengthBar.className = 'password-strength-bar';
+    if (strength <= 2) {
+        strengthBar.classList.add('strength-weak');
+    } else if (strength <= 4) {
+        strengthBar.classList.add('strength-medium');
+    } else {
+        strengthBar.classList.add('strength-strong');
+    }
+});
+
+// Show tutorial
+function showTutorial() {
+    const modal = new bootstrap.Modal(document.getElementById('tutorialModal'));
+    modal.show();
+}
+
+// Start interactive tour
+function startInteractiveTour() {
+    bootstrap.Modal.getInstance(document.getElementById('tutorialModal')).hide();
+    
+    // Use intro.js or custom tour implementation
+    showNotification('Interactive tour coming soon!', 'info');
+}
+
+// Show keyboard shortcuts
+function showKeyboardShortcuts() {
+    const modal = new bootstrap.Modal(document.getElementById('shortcutsModal'));
+    modal.show();
+}
+
+// Show investment suggestions
+function showInvestmentSuggestions() {
+    const suggestions = {
+        'Conservative': [
+            'Fixed Deposits (6-7% return)',
+            'Government Bonds (7-8% return)',
+            'Debt Mutual Funds (6-8% return)'
+        ],
+        'Moderate': [
+            'Balanced Mutual Funds (10-12% return)',
+            'Real Estate Investment (8-10% return)',
+            'Gold ETFs (7-9% return)'
+        ],
+        'Aggressive': [
+            'Equity Mutual Funds (12-15% return)',
+            'Direct Stocks (15-20% return)',
+            'Cryptocurrency (Variable return)'
+        ]
+    };
+    
+    let content = '<div class="investment-suggestions">';
+    for (const [type, items] of Object.entries(suggestions)) {
+        content += `<h6 class="text-primary">${type} Portfolio</h6><ul>`;
+        items.forEach(item => {
+            content += `<li>${item}</li>`;
+        });
+        content += '</ul>';
+    }
+    content += '</div>';
+    
+    Swal.fire({
+        title: 'Investment Suggestions',
+        html: content,
+        width: '600px',
+        confirmButtonText: 'Close',
+        confirmButtonColor: chartColors.primary
+    });
+}
+
+// Show loan calculator
+function showLoanCalculator() {
+    Swal.fire({
+        title: 'EMI Calculator',
+        html: `
+            <div class="emi-calculator">
+                <div class="mb-3">
+                    <label class="form-label">Loan Amount</label>
+                    <input type="number" class="form-control" id="emiAmount" placeholder="Enter loan amount">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Interest Rate (% per year)</label>
+                    <input type="number" class="form-control" id="emiRate" placeholder="Enter interest rate" step="0.1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Loan Tenure (months)</label>
+                    <input type="number" class="form-control" id="emiTenure" placeholder="Enter tenure in months">
+                </div>
+                <div class="alert alert-info" id="emiResult" style="display:none;"></div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Calculate',
+        confirmButtonColor: chartColors.primary,
+        preConfirm: () => {
+            const amount = parseFloat(document.getElementById('emiAmount').value);
+            const rate = parseFloat(document.getElementById('emiRate').value) / 100 / 12;
+            const tenure = parseInt(document.getElementById('emiTenure').value);
+            
+            if (amount && rate && tenure) {
+                const emi = (amount * rate * Math.pow(1 + rate, tenure)) / (Math.pow(1 + rate, tenure) - 1);
+                const totalAmount = emi * tenure;
+                const totalInterest = totalAmount - amount;
+                
+                return {
+                    emi: emi.toFixed(2),
+                    totalAmount: totalAmount.toFixed(2),
+                    totalInterest: totalInterest.toFixed(2)
+                };
+            }
+            return false;
+        }
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            Swal.fire({
+                title: 'EMI Calculation Result',
+                html: `
+                    <div class="text-start">
+                        <p><strong>Monthly EMI:</strong> ${formatCurrency(result.value.emi)}</p>
+                        <p><strong>Total Amount Payable:</strong> ${formatCurrency(result.value.totalAmount)}</p>
+                        <p><strong>Total Interest:</strong> ${formatCurrency(result.value.totalInterest)}</p>
+                    </div>
+                `,
+                confirmButtonText: 'Close',
+                confirmButtonColor: chartColors.primary
+            });
+        }
+    });
+}
+
+// Show expense analysis
+function showExpenseAnalysis() {
+    const expenseByCategory = {};
+    let totalExpenses = 0;
+    
+    data.expenses.forEach(exp => {
+        const category = exp.category || 'Other';
+        expenseByCategory[category] = (expenseByCategory[category] || 0) + exp.value;
+        totalExpenses += exp.value;
+    });
+    
+    let content = '<div class="expense-analysis">';
+    content += '<h6>Monthly Expense Breakdown</h6>';
+    content += '<table class="table table-sm">';
+    content += '<thead><tr><th>Category</th><th>Amount</th><th>Percentage</th></tr></thead>';
+    content += '<tbody>';
+    
+    Object.entries(expenseByCategory)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([category, amount]) => {
+            const percentage = totalExpenses > 0 ? (amount / totalExpenses * 100).toFixed(1) : 0;
+            content += `<tr>
+                <td>${category}</td>
+                <td>${formatCurrency(amount)}</td>
+                <td>${percentage}%</td>
+            </tr>`;
+        });
+    
+    content += '</tbody></table>';
+    content += `<p class="mt-3"><strong>Total Monthly Expenses:</strong> ${formatCurrency(totalExpenses)}</p>`;
+    content += '</div>';
+    
+    Swal.fire({
+        title: 'Expense Analysis',
+        html: content,
+        width: '600px',
+        confirmButtonText: 'Close',
+        confirmButtonColor: chartColors.primary
+    });
+}
+
+// Show goal planner
+function showGoalPlanner() {
+    // Get the most recent net worth from historical records if available
+    let currentNetWorth;
+    
+    if (window.historicalNetWorth && window.historicalNetWorth.length > 0) {
+        // Sort by date and get the most recent record
+        const sortedRecords = [...window.historicalNetWorth].sort((a, b) => new Date(b.date) - new Date(a.date));
+        currentNetWorth = sortedRecords[0].netWorth;
+        console.log('Using net worth from historical records:', currentNetWorth);
+    } else {
+        // Fallback to calculated net worth if no historical records
+        currentNetWorth = data.initial_cash + data.investments.reduce((sum, i) => sum + i.value, 0) - data.loans.reduce((sum, l) => sum + l.value, 0);
+        console.log('Using calculated net worth:', currentNetWorth);
+    }
+    
+    Swal.fire({
+        title: 'Goal Planning Calculator',
+        html: `
+            <div class="goal-planner">
+                <div class="mb-3">
+                    <label class="form-label">Current Net Worth ${window.historicalNetWorth && window.historicalNetWorth.length > 0 ? '(from latest monthly record)' : '(calculated)'}</label>
+                    <input type="text" class="form-control" value="${formatCurrency(currentNetWorth)}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Goal Amount</label>
+                    <input type="number" class="form-control" id="goalAmount" placeholder="Enter target amount">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Monthly Savings</label>
+                    <input type="number" class="form-control" id="monthlySavings" placeholder="Enter monthly savings amount">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Expected Annual Return (%)</label>
+                    <input type="number" class="form-control" id="expectedReturn" placeholder="Enter expected return" step="0.1">
+                </div>
+                <div class="alert alert-info" id="goalResult" style="display:none;"></div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Calculate',
+        confirmButtonColor: chartColors.primary,
+        preConfirm: () => {
+            const goalAmount = parseFloat(document.getElementById('goalAmount').value);
+            const monthlySavings = parseFloat(document.getElementById('monthlySavings').value);
+            const annualReturn = parseFloat(document.getElementById('expectedReturn').value) / 100;
+            
+            if (goalAmount && monthlySavings && annualReturn >= 0) {
+                const monthlyReturn = annualReturn / 12;
+                let balance = currentNetWorth; // Use the net worth we determined above
+                let months = 0;
+                
+                while (balance < goalAmount && months < 600) {
+                    balance = balance * (1 + monthlyReturn) + monthlySavings;
+                    months++;
+                }
+                
+                const years = Math.floor(months / 12);
+                const remainingMonths = months % 12;
+                
+                return {
+                    months: months,
+                    years: years,
+                    remainingMonths: remainingMonths,
+                    achievable: months < 600,
+                    currentNetWorth: currentNetWorth,
+                    goalAmount: goalAmount
+                };
+            }
+            return false;
+        }
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            const timeStr = result.value.years > 0 
+                ? `${result.value.years} years and ${result.value.remainingMonths} months`
+                : `${result.value.remainingMonths} months`;
+            
+            Swal.fire({
+                title: 'Goal Planning Result',
+                html: `
+                    <div class="text-center">
+                        ${result.value.achievable 
+                            ? `<h4 class="text-success">You can achieve your goal in ${timeStr}!</h4>`
+                            : '<h4 class="text-danger">Goal might take longer than 50 years</h4>'}
+                        <p class="mt-3">Starting from ${formatCurrency(result.value.currentNetWorth)}, you need to reach ${formatCurrency(result.value.goalAmount)}.</p>
+                        <p>Keep saving consistently to reach your target.</p>
+                    </div>
+                `,
+                confirmButtonText: 'Close',
+                confirmButtonColor: chartColors.primary
+            });
+        }
+    });
+}
+
+// Handle file import
+function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // Process imported data through the import function
+            window.importData = () => {
+                // The actual import is handled by data.js
+                // This is just triggering it with the file
+            };
+            
+            // Trigger file input click is already handled
+            // The data.js importData function will handle the actual import
+            
+        } catch (error) {
+            console.error('File import error:', error);
+            showNotification('Invalid file format', 'error');
+        }
+    };
+    
+    reader.readAsText(file);
+}
+
+// 7. Clean up function for page unload
+function cleanupResources() {
+    console.log('Cleaning up resources...');
+    
+    // Stop auto-save
+    stopAutoSave();
+    
+    // Clear all timeouts
+    notificationTimeouts.forEach(timeout => clearTimeout(timeout));
+    notificationTimeouts.clear();
+    
+    // Clear debounce timer
+    if (updateDebounceTimer) {
+        clearTimeout(updateDebounceTimer);
+    }
+    
+    // Destroy all charts
+    if (window.charts) {
+        Object.keys(window.charts).forEach(key => {
+            if (window.charts[key]) {
+                window.charts[key].destroy();
+            }
+        });
+    }
+    
+    // Clear any pending animations
+    if (window.cancelAnimationFrame) {
+        // Cancel any pending animation frames
+        let id = window.requestAnimationFrame(() => {});
+        while (id--) {
+            window.cancelAnimationFrame(id);
+        }
+    }
+}
+// Global error handler
+window.addEventListener('error', function(event) {
+    console.error('Global error:', event.error);
+    showNotification('An unexpected error occurred', 'error');
+});
+// 9. Add cleanup on page unload
+window.addEventListener('beforeunload', cleanupResources);
+window.addEventListener('unload', cleanupResources);
+// Export global functions
+window.logout = logout;
+window.exportData = exportData;
+window.exportToExcel = exportToExcel;
+window.exportToCSV = exportToCSV;
+window.exportToPDF = exportToPDF;
+window.exportToJSON = exportToJSON;
+window.showProfile = showProfile;
+window.showChangePasswordModal = showChangePasswordModal;
+window.changePassword = changePassword;
+window.showTutorial = showTutorial;
+window.startInteractiveTour = startInteractiveTour;
+window.showKeyboardShortcuts = showKeyboardShortcuts;
+window.showInvestmentSuggestions = showInvestmentSuggestions;
+window.showLoanCalculator = showLoanCalculator;
+window.showExpenseAnalysis = showExpenseAnalysis;
+window.showGoalPlanner = showGoalPlanner;
+window.handleFileImport = handleFileImport;
