@@ -194,12 +194,14 @@ async function loadData() {
                 'Authorization': `Bearer ${token}`
             }
         });
+        console.log('Raw response:', response);
 
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);
         }
 
         const serverData = await response.json();
+        console.log('Server data content:', serverData);
         console.log('loadData: Data received from server');
         
         // Validate data integrity
