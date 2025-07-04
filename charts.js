@@ -91,7 +91,8 @@ function initInvestmentChart() {
                 borderColor: [],
                 borderWidth: 2,
                 hoverBorderWidth: 3,
-                hoverOffset: 10
+                // Remove hoverOffset from here - we'll handle it dynamically
+                offset: [] // Initialize empty offset array
             }]
         },
         options: {
@@ -168,6 +169,28 @@ function initInvestmentChart() {
                 animateScale: true,
                 duration: 1000,
                 easing: 'easeOutQuart'
+            },
+            // Handle hover events
+            onHover: function(event, activeElements) {
+                const dataset = this.data.datasets[0];
+                
+                // Reset all offsets to 0
+                dataset.offset = new Array(dataset.data.length).fill(0);
+                
+                // If there's an active element (hover), set its offset
+                if (activeElements.length > 0) {
+                    const index = activeElements[0].index;
+                    dataset.offset[index] = 10; // Set hover offset for the active segment
+                }
+                
+                // Update the chart
+                this.update('none'); // Use 'none' to prevent animation on hover
+            },
+            // Reset offsets when mouse leaves the chart
+            onLeave: function() {
+                const dataset = this.data.datasets[0];
+                dataset.offset = new Array(dataset.data.length).fill(0);
+                this.update('none');
             }
         }
     });
@@ -516,17 +539,21 @@ function updateInvestmentChart() {
     charts.investment.data.datasets[0].backgroundColor = colors.map(c => c + 'CC'); // 80% opacity
     charts.investment.data.datasets[0].borderColor = colors;
     
+    // Initialize offset array with zeros to prevent hover state on load
+    charts.investment.data.datasets[0].offset = new Array(values.length).fill(0);
+    
     // Show message if no investments
     if (values.length === 0 || values.every(v => v === 0)) {
         charts.investment.data.labels = ['No Investments'];
         charts.investment.data.datasets[0].data = [1];
         charts.investment.data.datasets[0].backgroundColor = ['#e0e0e0'];
         charts.investment.data.datasets[0].borderColor = ['#bdbdbd'];
+        // Also set offset for the "No Investments" placeholder
+        charts.investment.data.datasets[0].offset = [0];
     }
     
     charts.investment.update('active');
 }
-
 // Update risk distribution chart
 function updateRiskChart() {
     if (!charts.risk) return;
