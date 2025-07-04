@@ -6,6 +6,7 @@ let currentTourStep = 0;
 
 // Debounce utility
 function debounce(func, wait) {
+    console.log('debounce function called')
     let timeout;
     return function (...args) {
         clearTimeout(timeout);
@@ -16,6 +17,7 @@ function debounce(func, wait) {
 // Create debounced update function - wait for update function to be available
 // Replace the existing debouncedUpdate creation with this improved version
 function createDebouncedUpdate() {
+    console.log('createDebouncedUpdate function called');
     return function(...args) {
         if (typeof window.update === 'function') {
             if (!window.debouncedUpdate || window.debouncedUpdate.name !== 'debouncedUpdate') {
@@ -47,6 +49,7 @@ const updateChecker = setInterval(() => {
 
 // Toggle section visibility
 function toggleSection(sectionId) {
+    console.log('toggleSection function called');
     const section = document.getElementById(sectionId);
     if (!section) return;
     
@@ -64,6 +67,7 @@ function toggleSection(sectionId) {
 
 // Add row to table
 function addRow(tableId, event) {
+    console.log('addRow function called');
     const table = document.getElementById(tableId)?.querySelector('tbody');
     if (!table) {
         console.error(`Table ${tableId} not found`);
@@ -216,6 +220,7 @@ function addRow(tableId, event) {
 
 // Add goal
 function addGoal(event) {
+    console.log('addGoal function called');
     const table = document.getElementById('goals')?.querySelector('tbody');
     if (!table) {
         console.error('Goals table not found');
@@ -260,6 +265,7 @@ function addGoal(event) {
 
 // Handle investment type change
 function handleInvestmentChange(selectElement) {
+    console.log('handleInvestmentChange function called');
     const row = selectElement.closest('tr');
     const selectedType = selectElement.value;
     
@@ -285,6 +291,7 @@ function handleInvestmentChange(selectElement) {
 
 // Remove row with animation
 function removeRow(button, tableId) {
+    console.log('removeRow function called');
     const row = button.closest('tr');
     
     if (typeof Swal !== 'undefined') {
@@ -312,6 +319,7 @@ function removeRow(button, tableId) {
 
 // Perform the actual row removal
 function performRowRemoval(row) {
+    console.log('performRowRemoval function called');
     row.style.transition = 'opacity 0.3s ease';
     row.style.opacity = '0';
     
@@ -326,6 +334,7 @@ function performRowRemoval(row) {
 
 // Add input validation
 function addInputValidation(row) {
+    console.log('addInputValidation function called');
     // Number inputs
     const numberInputs = row.querySelectorAll('input[type="number"]');
     numberInputs.forEach(input => {
@@ -344,6 +353,7 @@ function addInputValidation(row) {
 
 // Validate number input
 function validateNumberInput(event) {
+    console.log('validateNumberInput function called');
     const char = String.fromCharCode(event.which);
     const value = event.target.value;
     const isNumber = /[0-9]/.test(char);
@@ -375,6 +385,7 @@ function validateNumberInput(event) {
 
 // Validate paste
 function validatePaste(event) {
+    console.log('validatePaste function called');
     const paste = (event.clipboardData || window.clipboardData).getData('text');
     if (!/^-?\d*\.?\d*$/.test(paste)) {
         event.preventDefault();
@@ -383,6 +394,7 @@ function validatePaste(event) {
 
 // Validate text input
 function validateTextInput(event) {
+    console.log('validateTextInput function called');
     const input = event.target;
     const maxLength = parseInt(input.getAttribute('maxlength') || '50');
     
@@ -395,6 +407,7 @@ function validateTextInput(event) {
 let notificationTimeouts = new Set();
 
 function showNotification(message, type = 'info') {
+    console.log('showNotification function called');
     // Limit notification queue size
     if (notificationQueue.length > 5) {
         notificationQueue.shift(); // Remove oldest
@@ -405,6 +418,7 @@ function showNotification(message, type = 'info') {
 }
 
 function displayNextNotification() {
+    console.log('displayNextNotification function called');
     if (isDisplayingNotification || notificationQueue.length === 0) return;
     
     isDisplayingNotification = true;
@@ -453,6 +467,7 @@ function displayNextNotification() {
 
 // Get notification icon
 function getNotificationIcon(type) {
+    console.log('getNotificationIcon function called');
     const icons = {
         success: 'check-circle',
         error: 'exclamation-circle',
@@ -464,6 +479,7 @@ function getNotificationIcon(type) {
 
 // Show error
 function showError(message) {
+    console.log('showError function called');
     const errorDiv = document.getElementById('error-message');
     if (errorDiv) {
         errorDiv.textContent = message;
@@ -476,6 +492,7 @@ function showError(message) {
 
 // Toggle dark mode
 function toggleDarkMode() {
+    console.log('toggleDarkMode function called');
     const body = document.body;
     const isDarkMode = body.classList.toggle('dark-mode');
     body.classList.toggle('light-mode', !isDarkMode);
@@ -513,6 +530,7 @@ function toggleDarkMode() {
 
 // Toggle sidebar
 function toggleSidebar() {
+    console.log('toggleSidebar function called');
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
     
@@ -532,6 +550,7 @@ function toggleSidebar() {
 
 // Show monthly details
 function showMonthlyDetails(date) {
+    console.log('showMonthlyDetails function called');
     const sortedRecords = [...historicalNetWorth].sort((a, b) => new Date(b.date) - new Date(a.date));
     const recordIndex = sortedRecords.findIndex(r => r.date === date);
     const record = sortedRecords[recordIndex];
@@ -566,11 +585,7 @@ function showMonthlyDetails(date) {
 
 // Debug version of updateMonthlyRecordsTable
 function updateMonthlyRecordsTable() {
-    console.log('=== UPDATE MONTHLY RECORDS TABLE DEBUG START ===');
-    console.log('1. Function called');
-    console.log('   - historicalNetWorth length:', historicalNetWorth?.length || 0);
-    console.log('   - window.historicalNetWorth length:', window.historicalNetWorth?.length || 0);
-    console.log('   - Are they same reference?', historicalNetWorth === window.historicalNetWorth);
+    console.log('updateMonthlyRecordsTable function called');
     
     const tbody = document.querySelector('#monthlyRecords tbody');
     if (!tbody) {
@@ -644,14 +659,11 @@ function updateMonthlyRecordsTable() {
         tbody.appendChild(row);
     });
     
-    console.log('6. Table rows created and added');
-    console.log('   - Final tbody children count:', tbody.children.length);
-    console.log('=== UPDATE MONTHLY RECORDS TABLE DEBUG END ===');
 }
 
 // Debug version to check the update function
 function debugUpdate() {
-    console.log('=== UPDATE FUNCTION DEBUG ===');
+    console.log('debugUpdate function called');
     console.log('Current data.initial_cash:', data?.initial_cash);
     console.log('Current overview net worth element:', document.getElementById('netWorth')?.value);
     
@@ -665,6 +677,7 @@ function debugUpdate() {
 }
 // Add delete function if missing
 function deleteMonthlyRecord(date) {
+    console.log('deleteMonthlyRecord function called');
     if (confirm('Delete this monthly record? This action cannot be undone.')) {
         if (window.historicalNetWorth) {
             window.historicalNetWorth = window.historicalNetWorth.filter(r => r.date !== date);
@@ -687,6 +700,7 @@ function deleteMonthlyRecord(date) {
 
 // Delete monthly record
 function deleteMonthlyRecord(date) {
+    console.log('deleteMonthlyRecord function called');
     if (typeof Swal !== 'undefined') {
         Swal.fire({
             title: 'Delete Monthly Record?',
@@ -711,6 +725,7 @@ function deleteMonthlyRecord(date) {
 
 // Perform the actual record deletion
 function performRecordDeletion(date) {
+    console.log('performRecordDeletion function called');
     if (window.historicalNetWorth) {
         window.historicalNetWorth = window.historicalNetWorth.filter(r => r.date !== date);
         updateMonthlyRecordsTable();
@@ -731,7 +746,7 @@ function performRecordDeletion(date) {
 
 // Initialize cookie consent
 function initializeCookieConsent() {
-    console.log('Initializing cookie consent');
+    console.log('initializeCookieConsent function called');
     
     if (!window.checkAuth || !window.checkAuth()) {
         console.warn('User not authenticated - skipping cookie consent');
@@ -766,6 +781,7 @@ function initializeCookieConsent() {
 
 // Accept cookies
 function acceptCookies() {
+    console.log('acceptCookies function called');
     const email = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!email) return;
     
@@ -795,6 +811,7 @@ function acceptCookies() {
 
 // Decline cookies
 function declineCookies() {
+    console.log('declineCookies function called');
     const email = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!email) return;
     
@@ -819,6 +836,7 @@ function declineCookies() {
 
 // Show cookie settings
 function showCookieSettings() {
+    console.log('showCookieSettings function called');
     const email = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!email) return;
     
@@ -843,6 +861,7 @@ function showCookieSettings() {
 
 // Save cookie settings
 function saveCookieSettings() {
+    console.log('saveCookieSettings function called');
     const email = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!email) return;
     
@@ -883,6 +902,7 @@ function saveCookieSettings() {
 
 // Apply cookie settings
 function applyCookieSettings(settings) {
+    console.log('applyCookieSettings function called');
     console.log('Applying cookie settings:', settings);
     
     // Update global variable
