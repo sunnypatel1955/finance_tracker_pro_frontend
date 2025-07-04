@@ -26,6 +26,7 @@ let autoSaveInterval = null;
 
 // Enhanced authentication helpers
 function getToken() {
+    console.log('getToken function called');
     const token = localStorage.getItem('token');
     if (!token) {
         console.warn('No authentication token found');
@@ -35,11 +36,13 @@ function getToken() {
 }
 
 function getCurrentUser() {
+    console.log('getCurrentUser function called');
     const email = localStorage.getItem('financeLoggedInUserEmail');
     return email || null;
 }
 
 function getUserDataKey() {
+    console.log('getUserDataKey function called');
     const token = getToken();
     const email = getCurrentUser();
     if (!token || !email) {
@@ -51,7 +54,7 @@ function getUserDataKey() {
 
 // Enhanced save data with retry logic
 async function saveData() {
-    console.log('saveData: Starting save operation');
+    console.log('saveData function called');
     console.log('saveData: Current data before sending:', data);
     console.log('saveData: Current historicalNetWorth before sending:', historicalNetWorth);
     // Check if hasCookieConsent is available
@@ -166,7 +169,7 @@ async function saveData() {
 
 // Enhanced load data with validation
 async function loadData() {
-    console.log('loadData: Starting load operation');
+    console.log('loadData function called');
     
     if (!checkAuth()) {
         console.log('loadData: Blocked - not authenticated');
@@ -271,6 +274,7 @@ async function loadData() {
 
 // Save to local storage
 function saveToLocalStorage(dataToSave) {
+    console.log('saveToLocalStorage function called');
     try {
         const dataKey = getUserDataKey();
         if (dataKey) {
@@ -285,6 +289,7 @@ function saveToLocalStorage(dataToSave) {
 
 // Load from local storage
 function loadFromLocalStorage() {
+    console.log('loadFromLocalStorage function called');
     try {
         const dataKey = getUserDataKey();
         if (!dataKey) return false;
@@ -315,6 +320,7 @@ function loadFromLocalStorage() {
 
 // Get default data structure
 function getDefaultData() {
+    console.log('getDefaultData function called');
     return {
         initial_cash: 0,
         investments: [],
@@ -333,6 +339,7 @@ function getDefaultData() {
 
 // Validate data integrity
 function validateDataIntegrity(dataToValidate) {
+    console.log('validateDataIntegrity function called');
     try {
         if (!dataToValidate || typeof dataToValidate !== 'object') {
             console.warn('validateDataIntegrity: Invalid data type');
@@ -373,7 +380,7 @@ function validateDataIntegrity(dataToValidate) {
 
 // Data migration for version compatibility
 function migrateData(oldData, oldVersion) {
-    console.log(`Migrating data from version ${oldVersion} to ${CURRENT_DATA_VERSION}`);
+    console.log(`migrateData function called - Migrating data from version ${oldVersion} to ${CURRENT_DATA_VERSION}`);
     
     let migratedData = { ...oldData };
     
@@ -402,6 +409,7 @@ function migrateData(oldData, oldVersion) {
 
 // Generate checksum for data integrity
 function generateChecksum(dataObj) {
+    console.log('generateChecksum function called');
     const str = JSON.stringify(dataObj);
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -414,7 +422,7 @@ function generateChecksum(dataObj) {
 
 // Update UI with loaded data
 function updateUIWithData() {
-    console.log('updateUIWithData: Updating UI elements');
+    console.log('updateUIWithData function called - Updating UI elements');
     
     // Update initial cash
     const initialCashInput = document.getElementById('initial_cash');
@@ -449,6 +457,7 @@ function updateUIWithData() {
 
 // Update table section
 function updateTableSection(section) {
+    console.log('updateTableSection function called - Updating table section:', section);
     const tbody = document.getElementById(section)?.querySelector('tbody');
     if (!tbody) return;
     
@@ -465,6 +474,7 @@ function updateTableSection(section) {
 
 // Create table row based on section
 function createTableRow(section, item) {
+    console.log('createTableRow function called - Creating table row for section:', section);
     const row = document.createElement('tr');
     
     switch (section) {
@@ -539,28 +549,32 @@ function createTableRow(section, item) {
 
 // Option generators
 function getInvestmentOptions(selected) {
+    console.log('getInvestmentOptions function called');
     const options = ['Fixed Income', 'Mutual Funds', 'Stocks', 'Real Estate', 'Gold', 'Bonds', 'Cryptocurrency', 'Other'];
     return options.map(opt => `<option value="${opt}" ${selected === opt ? 'selected' : ''}>${opt}</option>`).join('');
 }
 
 function getIncomeOptions(selected) {
+    console.log('getIncomeOptions function called');
     const options = ['Salary', 'Freelance', 'Business', 'Rental Income', 'Dividend', 'Interest', 'Other'];
     return options.map(opt => `<option value="${opt}" ${selected === opt ? 'selected' : ''}>${opt}</option>`).join('');
 }
 
 function getLoanOptions(selected) {
+    console.log('getLoanOptions function called');
     const options = ['Home Loan', 'Car Loan', 'Personal Loan', 'Education Loan', 'Business Loan', 'Other'];
     return options.map(opt => `<option value="${opt}" ${selected === opt ? 'selected' : ''}>${opt}</option>`).join('');
 }
 
 function getExpenseOptions(selected) {
+    console.log('getExpenseOptions function called');
     const options = ['Housing', 'Food', 'Transport', 'Loan EMI', 'Healthcare', 'Entertainment', 'Utilities', 'Other'];
     return options.map(opt => `<option value="${opt}" ${selected === opt ? 'selected' : ''}>${opt}</option>`).join('');
 }
 
 // Reset data with confirmation
 function resetData() {
-    console.log('resetData: Initiating reset');
+    console.log('resetData function called - Initiating reset');
     
     // Check if Swal is available
     if (typeof Swal !== 'undefined') {
@@ -588,6 +602,7 @@ function resetData() {
 
 // Perform the actual reset
 async function performReset() {
+    console.log('performReset function called - Performing reset');
     try {
         // Delete from server
         const token = getToken();
@@ -646,6 +661,7 @@ async function performReset() {
 
 // Clear all tables
 function clearAllTables() {
+    console.log('clearAllTables function called - Clearing all tables');
     ['investments', 'income', 'loans', 'expenses', 'goals'].forEach(section => {
         const tbody = document.getElementById(section)?.querySelector('tbody');
         if (tbody) tbody.innerHTML = '';
@@ -654,7 +670,7 @@ function clearAllTables() {
 
 // Backup data
 async function backupData() {
-    console.log('backupData: Creating backup');
+    console.log('backupData function called - Creating backup');
     
     if (!checkAuth()) {
         if (typeof window.showNotification === 'function') {
@@ -709,7 +725,7 @@ async function backupData() {
 
 // Import data with validation
 function importData() {
-    console.log('importData: Starting import process');
+    console.log('importData function called - Starting import process');
     
     if (!checkAuth()) {
         if (typeof window.showNotification === 'function') {
@@ -829,7 +845,7 @@ function importData() {
 
 // Undo last action
 function undoData() {
-    console.log('undoData: Attempting to undo last action');
+    console.log('undoData function called - Attempting to undo last action');
     
     if (!previousData) {
         if (typeof window.showNotification === 'function') {
@@ -864,7 +880,7 @@ function undoData() {
 // Replace your saveMonthlyNetWorth function with this version that updates BOTH references
 
 async function saveMonthlyNetWorth() {
-    console.log('saveMonthlyNetWorth: Starting...');
+    console.log('saveMonthlyNetWorth function called - Starting...');
     
     // CRITICAL: First update data from all UI inputs
     if (typeof window.update === 'function') {
@@ -999,6 +1015,7 @@ async function saveMonthlyNetWorth() {
 
 // Export month data
 function exportMonthData() {
+    console.log('exportMonthData function called - Exporting specific month data');
     // Implementation for exporting specific month data
     const modal = document.getElementById('monthlyDetailsModal');
     if (!modal) return;
@@ -1032,6 +1049,7 @@ function exportMonthData() {
 // 5. Fix for auto-save memory leak
 let autoSaveTimer = null;
 function startAutoSave() {
+    console.log('startAutoSave function called - Enabling auto-save');
     // Clear existing timer first
     if (autoSaveTimer) {
         clearInterval(autoSaveTimer);
@@ -1054,6 +1072,7 @@ function startAutoSave() {
 }
 
 function stopAutoSave() {
+    console.log('stopAutoSave function called - Disabling auto-save'); 
     if (autoSaveTimer) {
         clearInterval(autoSaveTimer);
         autoSaveTimer = null;
@@ -1064,6 +1083,7 @@ function stopAutoSave() {
 
 // Show/hide loading state
 function showLoadingState(show) {
+    console.log('showLoadingState function called - Showing loading state:', show);
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.classList.toggle('active', show);
@@ -1072,6 +1092,7 @@ function showLoadingState(show) {
 
 // Update summary cards
 function updateSummaryCards() {
+    console.log('updateSummaryCards function called - Updating summary cards');
     const totalInvestments = data.investments?.reduce((sum, i) => sum + (i.value || 0), 0) || 0;
     const totalLoans = data.loans?.reduce((sum, l) => sum + (l.value || 0), 0) || 0;
     const totalIncome = data.income?.reduce((sum, inc) => sum + (inc.value || 0), 0) || 0;
@@ -1109,6 +1130,7 @@ function updateSummaryCards() {
 
 // Helper to update element text
 function updateElement(id, text) {
+    console.log('updateElement function called - Updating element:', id);
     const element = document.getElementById(id);
     if (element) {
         element.textContent = text;
@@ -1117,6 +1139,7 @@ function updateElement(id, text) {
 
 // Format currency function
 function formatCurrency(amount) {
+    console.log('formatCurrency function called - Formatting currency:', amount);
     const currencySelect = document.getElementById('currency');
     const currency = currencySelect ? currencySelect.value : 'INR';
     
@@ -1132,6 +1155,7 @@ function formatCurrency(amount) {
 
 // Check authentication function
 function checkAuth() {
+    console.log('checkAuth function called - Checking authentication');
     const token = localStorage.getItem('token');
     const email = localStorage.getItem('financeLoggedInUserEmail');
     
