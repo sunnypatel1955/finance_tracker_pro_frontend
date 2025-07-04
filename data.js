@@ -120,6 +120,7 @@ async function saveData() {
 
         const result = await response.json();
         console.log('saveData: Success', result);
+        console.log('Saved data', financeServerData);
         
         // Save to local storage as backup
         saveToLocalStorage(financeServerData);
