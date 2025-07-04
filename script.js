@@ -381,7 +381,21 @@ function logout() {
             
             // Stop auto-save
             stopAutoSave();
-            
+
+            // Clear global app state objects
+            window.data = null;
+            window.historicalNetWorth = null;
+            window.previousData = null;
+            window.hasCookieConsent = false;
+
+            // Clear any intervals, timeouts or event listeners you may have added
+            if (typeof autoSaveInterval !== 'undefined' && autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+                autoSaveInterval = null;
+            }
+
+            // Optionally — if you added any custom global events — remove them here
+
             // Redirect to login
             window.location.href = 'index.html';
         }
