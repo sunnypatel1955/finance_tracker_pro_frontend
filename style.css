@@ -462,7 +462,7 @@ body.light-mode .sidebar-section-label {
 .btn-outline-danger {
     background: var(--glass-bg);
     border: 1px solid #ff6b6b;
-    color: #4facfe;
+    color: #ff6b6b;
 }
 
 .btn-outline-danger:hover {
