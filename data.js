@@ -55,7 +55,7 @@ function getUserDataKey() {
 // Enhanced save data with retry logic
 async function saveData() {
     console.log('saveData function called');
-    console.log('saveData: Current data before sending:', data);
+    console.log('saveData: Current data before sending:', window.data);
     console.log('saveData: Current historicalNetWorth before sending:', historicalNetWorth);
     // Check if hasCookieConsent is available
     const consentCheck = typeof window.hasCookieConsent !== 'undefined' ? window.hasCookieConsent : true;
@@ -100,9 +100,9 @@ async function saveData() {
         const financeServerData = {
             version: CURRENT_DATA_VERSION,
             timestamp: new Date().toISOString(),
-            data: data,
+            data: window.data,
             historicalNetWorth: historicalNetWorth,
-            checksum: generateChecksum(data)
+            checksum: generateChecksum(window.data)
         };
     
         console.log('saveData: Sending to server...');
@@ -143,7 +143,7 @@ async function saveData() {
                 const localData = {
                     version: CURRENT_DATA_VERSION,
                     timestamp: new Date().toISOString(),
-                    data: data,
+                    data: window.data,
                     historicalNetWorth: historicalNetWorth
                 };
                 localStorage.setItem(dataKey, JSON.stringify(localData));
