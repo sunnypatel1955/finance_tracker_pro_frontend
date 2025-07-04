@@ -1,7 +1,5 @@
-// Enhanced Calculations Module
-// Remove duplicate previousData declaration since it's already in data.js
-// Color adjustment utility
 function adjustColor(color, factor) {
+    console.log('adjustColor function called');
     const hex = color.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 6);
@@ -12,16 +10,13 @@ function adjustColor(color, factor) {
     return `#${adjust(r).toString(16).padStart(2, '0')}${adjust(g).toString(16).padStart(2, '0')}${adjust(b).toString(16).padStart(2, '0')}`;
 }
 
-// Complete replacement for update function in calculations.js
 function update() {
-    console.log('update: Starting calculation update');
+    console.log('update function called');
     
-    // Store previous data for undo (use the global previousData from data.js)
     if (typeof window.data !== 'undefined') {
         window.previousData = JSON.parse(JSON.stringify(window.data));
     }
     
-    // Update data from UI
     const initialCashInput = document.getElementById('initial_cash');
     if (initialCashInput && window.data) {
         const cashValue = parseFloat(initialCashInput.value) || 0;
@@ -29,7 +24,6 @@ function update() {
         console.log('update: Set initial_cash to:', cashValue);
     }
     
-    // Update currency setting
     const currencySelect = document.getElementById('currency');
     if (currencySelect && window.data && window.data.settings) {
         window.data.settings.currency = currencySelect.value;
@@ -40,7 +34,6 @@ function update() {
         return;
     }
     
-    // Update investments
     window.data.investments = Array.from(document.querySelectorAll('#investments tbody tr')).map(row => ({
         name: row.querySelector('[name="investment_name"]')?.value || 'Unnamed',
         value: parseFloat(row.querySelector('[name="investment_value"]')?.value) || 0,
@@ -50,14 +43,12 @@ function update() {
         dateAdded: new Date().toISOString()
     }));
     
-    // Update income
     window.data.income = Array.from(document.querySelectorAll('#income tbody tr')).map(row => ({
         name: row.querySelector('[name="income_name"]')?.value || 'Unnamed',
         value: parseFloat(row.querySelector('[name="income_value"]')?.value) || 0,
         remark: row.querySelector('[name="income_remark"]')?.value || ''
     }));
     
-    // Update loans
     window.data.loans = Array.from(document.querySelectorAll('#loans tbody tr')).map(row => ({
         name: row.querySelector('[name="loan_name"]')?.value || 'Unnamed',
         value: parseFloat(row.querySelector('[name="loan_value"]')?.value) || 0,
@@ -65,7 +56,6 @@ function update() {
         remark: row.querySelector('[name="loan_remark"]')?.value || ''
     }));
     
-    // Update expenses
     window.data.expenses = Array.from(document.querySelectorAll('#expenses tbody tr')).map(row => ({
         name: row.querySelector('[name="expense_category"]')?.value || 'Other',
         type: row.querySelector('[name="expense_type"]')?.value || 'Recurring',
@@ -74,23 +64,19 @@ function update() {
         remark: row.querySelector('[name="expense_remark"]')?.value || ''
     }));
     
-    // Update goals
     window.data.goals = Array.from(document.querySelectorAll('#goals tbody tr')).map(row => ({
         name: row.querySelector('[name="goal_name"]')?.value || 'Unnamed',
         target: parseFloat(row.querySelector('[name="goal_target"]')?.value) || 0,
         time: row.querySelector('[name="goal_time"]')?.value || 'N/A'
     }));
     
-    // Validate inputs
     if (!validateInputs()) {
         console.warn('update: Input validation failed');
         return;
     }
     
-    // Perform calculations
     performCalculations();
     
-    // Update all visualizations - with proper function checks
     if (typeof window.updateAllCharts === 'function') {
         window.updateAllCharts();
     }
@@ -99,14 +85,12 @@ function update() {
         window.updateSummaryCards();
     }
     
-    // Save data if auto-save enabled
     if (window.data.settings?.autoSave && window.hasCookieConsent) {
         if (typeof window.saveData === 'function') {
             window.saveData();
         }
     }
     
-    // Update monthly records and insights
     if (typeof updateMonthlyRecordsTable === 'function') {
         updateMonthlyRecordsTable();
     }
@@ -116,11 +100,10 @@ function update() {
     showError(''); // Clear any previous errors
 }
 
-// Complete replacement for performCalculations function in calculations.js
 function performCalculations() {
+    console.log('performCalculations function called');
     if (!window.data) return;
     
-    // Calculate totals
     const totalInvestments = window.data.investments.reduce((sum, i) => sum + (i.value || 0), 0);
     const totalLoans = window.data.loans.reduce((sum, l) => sum + (l.value || 0), 0);
     const totalIncome = window.data.income.reduce((sum, s) => sum + (s.value || 0), 0);
@@ -129,7 +112,6 @@ function performCalculations() {
         .reduce((sum, e) => sum + (e.value || 0), 0);
     const totalExpenses = window.data.expenses.reduce((sum, e) => sum + (e.value || 0), 0);
     
-    // Calculate net worth - ensure initial_cash is a number
     const initialCash = parseFloat(window.data.initial_cash) || 0;
     const netWorth = initialCash + totalInvestments - totalLoans;
     
@@ -140,7 +122,6 @@ function performCalculations() {
         netWorth
     });
     
-    // Update overview displays
     const netWorthInput = document.getElementById('netWorth');
     const totalInvestmentsInput = document.getElementById('totalInvestments');
     const totalLoansInput = document.getElementById('totalLoans');
@@ -152,33 +133,28 @@ function performCalculations() {
     if (totalInvestmentsInput) totalInvestmentsInput.value = formatCurrency(totalInvestments);
     if (totalLoansInput) totalLoansInput.value = formatCurrency(totalLoans);
     
-    // Calculate goals progress
     window.data.goals.forEach((goal, index) => {
         const row = document.querySelectorAll('#goals tbody tr')[index];
         if (!row) return;
         
         const monthlySavings = totalIncome - totalRecurringExpenses;
         
-        // FIXED: Calculate weighted average return correctly
         let avgReturn = 0;
         if (totalInvestments > 0 && window.data.investments.length > 0) {
             const weightedReturnSum = window.data.investments.reduce((sum, i) => {
                 return sum + ((i.value || 0) * (i.return || 0));
             }, 0);
-            avgReturn = weightedReturnSum / totalInvestments / 100; // Convert to decimal
+            avgReturn = weightedReturnSum / totalInvestments / 100;
         }
         
-        // Calculate average loan interest
         const avgInterest = window.data.loans.length > 0
             ? window.data.loans.reduce((sum, l) => sum + (l.interest || 0), 0) / window.data.loans.length / 100
             : 0;
         
-        // Calculate time to reach goal
         let currentValue = netWorth;
         let months = 0;
         
         if (goal.target > 0) {
-            // Calculate progress percentage
             const progress = Math.min((netWorth / goal.target) * 100, 100);
             const progressBar = row.querySelector('.progress-bar');
             if (progressBar) {
@@ -186,7 +162,6 @@ function performCalculations() {
                 progressBar.textContent = `${progress.toFixed(0)}%`;
             }
             
-            // Calculate time to reach goal
             if (monthlySavings > 0 || avgReturn > avgInterest) {
                 const monthlyReturn = avgReturn / 12;
                 const monthlyInterest = avgInterest / 12;
@@ -197,7 +172,6 @@ function performCalculations() {
                     months++;
                 }
                 
-                // Format time display
                 const timeInput = row.querySelector('[name="goal_time"]');
                 if (timeInput) {
                     if (months >= 1200) {
@@ -222,13 +196,12 @@ function performCalculations() {
     });
 }
 
-
-// Memory-efficient data validation
 function validateInputs() {
+    console.log('validateInputs function called');
     if (!window.data) return false;
     
     const errors = [];
-    const maxErrors = 10; // Limit error collection
+    const maxErrors = 10;
     
     // Validate with early exit
     if (window.data.initial_cash < 0) {
@@ -274,9 +247,8 @@ function validateInputs() {
     return errors.length === 0;
 }
 
-// Calculate and update insights
 function updateInsights() {
-    console.log('updateInsights: Calculating financial insights');
+    console.log('updateInsights function called');
     
     if (!window.historicalNetWorth || window.historicalNetWorth.length < 2) {
         const growthRateElement = document.getElementById('growthRate');
@@ -293,7 +265,6 @@ function updateInsights() {
         return;
     }
     
-    // Calculate monthly changes and growth rates
     const monthlyChanges = [];
     const monthlyGrowthRates = [];
     let bestMonth = { change: -Infinity, date: null };
@@ -318,28 +289,23 @@ function updateInsights() {
         }
     }
     
-    // Calculate average growth rate
     const avgGrowthRate = monthlyGrowthRates.length > 0
         ? monthlyGrowthRates.reduce((sum, rate) => sum + rate, 0) / monthlyGrowthRates.length
         : 0;
     
-    // FIXED: Calculate volatility correctly as percentage of net worth
     const meanChange = monthlyChanges.reduce((sum, change) => sum + change, 0) / monthlyChanges.length;
     const squaredDiffs = monthlyChanges.map(change => Math.pow(change - meanChange, 2));
     const variance = squaredDiffs.reduce((sum, diff) => sum + diff, 0) / monthlyChanges.length;
     const volatility = Math.sqrt(variance);
     
-    // Convert volatility to percentage of average net worth
     const avgNetWorth = sortedRecords.reduce((sum, record) => sum + record.netWorth, 0) / sortedRecords.length;
     const volatilityPercentage = avgNetWorth > 0 ? (volatility / avgNetWorth) * 100 : 0;
     
-    // Format dates
     const formatDate = (date) => date.toLocaleDateString('en-US', { 
         month: 'short', 
         year: 'numeric' 
     });
     
-    // Update growth rate card
     const growthRateCard = document.getElementById('growthRate');
     if (growthRateCard) {
         growthRateCard.textContent = `${avgGrowthRate >= 0 ? '+' : ''}${avgGrowthRate.toFixed(1)}% monthly average`;
@@ -352,7 +318,6 @@ function updateInsights() {
         }
     }
     
-    // FIXED: Update volatility card with correct interpretation
     const volatilityCard = document.getElementById('volatility');
     if (volatilityCard) {
         let stabilityText = '';
@@ -371,7 +336,6 @@ function updateInsights() {
         }
     }
     
-    // Update best/worst month card
     const bestWorstMonthCard = document.getElementById('bestWorstMonth');
     if (bestWorstMonthCard && bestMonth.date && worstMonth.date) {
         bestWorstMonthCard.innerHTML = `
@@ -380,7 +344,6 @@ function updateInsights() {
         `;
     }
     
-    // FIXED: Generate actionable insights with correct volatility thresholds
     const insights = generateActionableInsights(avgGrowthRate, volatilityPercentage);
     const actionableInsightsCard = document.getElementById('actionableInsights');
     if (actionableInsightsCard) {
@@ -388,20 +351,19 @@ function updateInsights() {
     }
 }
 
-// Generate actionable insights based on data
+
 function generateActionableInsights(avgGrowthRate, volatilityPercentage) {
+    console.log('generateActionableInsights function called');
     if (!window.data) return ['Data not available for insights.'];
     
     const insights = [];
     
-    // Get current financial state
     const totalIncome = window.data.income.reduce((sum, inc) => sum + inc.value, 0);
     const totalExpenses = window.data.expenses.reduce((sum, exp) => sum + exp.value, 0);
     const totalInvestments = window.data.investments.reduce((sum, i) => sum + i.value, 0);
     const totalLoans = window.data.loans.reduce((sum, l) => sum + l.value, 0);
     const netWorth = window.data.initial_cash + totalInvestments - totalLoans;
     
-    // Growth rate insights
     if (avgGrowthRate > 5) {
         insights.push(`Excellent! Your wealth is growing at ${avgGrowthRate.toFixed(1)}% monthly. Consider increasing investments to accelerate growth.`);
     } else if (avgGrowthRate > 0) {
@@ -410,7 +372,6 @@ function generateActionableInsights(avgGrowthRate, volatilityPercentage) {
         insights.push(`⚠️ Your net worth is declining at ${Math.abs(avgGrowthRate).toFixed(1)}% monthly. Review expenses and consider additional income sources.`);
     }
     
-    // FIXED: Volatility insights with correct thresholds
     if (volatilityPercentage > 30) {
         insights.push('📊 High volatility detected. Consider diversifying investments and building an emergency fund.');
     } else if (volatilityPercentage > 20) {
@@ -421,7 +382,6 @@ function generateActionableInsights(avgGrowthRate, volatilityPercentage) {
         insights.push('✅ Good financial stability. Continue monitoring and maintain your current approach.');
     }
     
-    // Savings rate analysis
     if (totalIncome > 0) {
         const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
         
@@ -438,7 +398,6 @@ function generateActionableInsights(avgGrowthRate, volatilityPercentage) {
         }
     }
     
-    // Investment diversification insights
     const investmentTypes = new Set(window.data.investments.map(i => i.name)).size;
     if (investmentTypes < 3 && window.data.investments.length > 0) {
         insights.push('💡 Consider diversifying across more investment types to reduce risk.');
@@ -446,7 +405,6 @@ function generateActionableInsights(avgGrowthRate, volatilityPercentage) {
         insights.push('👍 Good diversification across investment types.');
     }
     
-    // Emergency fund check
     const monthlyExpenses = totalExpenses;
     const liquidCash = window.data.initial_cash;
     const emergencyFundMonths = monthlyExpenses > 0 ? liquidCash / monthlyExpenses : 0;
@@ -460,7 +418,6 @@ function generateActionableInsights(avgGrowthRate, volatilityPercentage) {
     return insights.length > 0 ? insights : ['Keep tracking your finances regularly for personalized insights.'];
 }
 
-// Manual calculation trigger
 function calculate() {
     console.log('calculate: Manual calculation triggered');
     update();
@@ -469,13 +426,12 @@ function calculate() {
     }
 }
 
-// Format currency function (if not defined elsewhere)
 function formatCurrency(amount) {
+    console.log('formatCurrency function called');
     if (typeof window.formatCurrency === 'function') {
         return window.formatCurrency(amount);
     }
     
-    // Fallback formatting
     const currencySelect = document.getElementById('currency');
     const currency = currencySelect ? currencySelect.value : 'INR';
     
@@ -489,8 +445,8 @@ function formatCurrency(amount) {
     return formatter.format(amount);
 }
 
-// Show error function (if not defined elsewhere)
 function showError(message) {
+    console.log('showError function called');
     if (typeof window.showError === 'function') {
         window.showError(message);
     } else {
@@ -498,15 +454,13 @@ function showError(message) {
     }
 }
 
-// Auto-save functionality
 function startAutoSave() {
-    // Clear existing timer first
+    console.log('startAutoSave function called');
     if (window.autoSaveTimer) {
         clearInterval(window.autoSaveTimer);
         window.autoSaveTimer = null;
     }
     
-    // Check if auto-save is enabled
     if (window.data?.settings?.autoSave !== false) {
         window.autoSaveTimer = setInterval(() => {
             const consentCheck = typeof window.hasCookieConsent !== 'undefined' ? window.hasCookieConsent : true;
@@ -522,6 +476,7 @@ function startAutoSave() {
 }
 
 function stopAutoSave() {
+    console.log('stopAutoSave function called');
     if (window.autoSaveTimer) {
         clearInterval(window.autoSaveTimer);
         window.autoSaveTimer = null;
@@ -529,8 +484,8 @@ function stopAutoSave() {
     }
 }
 
-// Show notification function (fallback)
 function showNotification(message, type = 'info') {
+    console.log('showNotification function called');
     if (typeof window.showNotification === 'function') {
         window.showNotification(message, type);
     } else {
@@ -538,24 +493,19 @@ function showNotification(message, type = 'info') {
     }
 }
 
-// Cleanup resources function
 function cleanupResources() {
-    console.log('Cleaning up calculation resources...');
+    console.log('cleanupResources function called');
     
-    // Stop auto-save
     stopAutoSave();
     
-    // Clear any calculation timeouts/intervals
     if (window.calculationTimeout) {
         clearTimeout(window.calculationTimeout);
     }
 }
 
-// Setup optimized event listeners
 function setupOptimizedEventListeners() {
-    console.log('Setting up optimized calculation event listeners...');
+    console.log('setupOptimizedEventListeners function called');
     
-    // Add debounced listeners to all inputs
     const inputs = document.querySelectorAll('input[type="number"], select, input[type="text"]:not([readonly])');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
@@ -566,7 +516,6 @@ function setupOptimizedEventListeners() {
     });
 }
 
-// Export functions to global scope
 window.update = update;
 window.calculate = calculate;
 window.updateInsights = updateInsights;
