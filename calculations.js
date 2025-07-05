@@ -727,7 +727,7 @@ function drawHealthScoreGauge(score) {
     
     // Draw "out of 100" text
     ctx.font = '14px Inter';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
     ctx.fillText('out of 100', centerX, centerY + 25);
 }
 
