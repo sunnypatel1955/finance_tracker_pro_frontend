@@ -684,8 +684,7 @@ for (let month = 0; month < 12; month++) {
     charts.progress.data.labels = labels;
     charts.progress.data.datasets[0].data = dataPoints;
     
-    // Add goal lines if goals exist
-    // Add goal lines if goals exist
+// Add goal lines if goals exist
 if (window.data.goals && window.data.goals.length > 0) {
     // Remove existing goal datasets (keep only the main projection)
     while (charts.progress.data.datasets.length > 1) {
@@ -695,41 +694,27 @@ if (window.data.goals && window.data.goals.length > 0) {
     // Add custom goal line for each goal
     window.data.goals.forEach((goal, index) => {
         if (goal.target && goal.target > 0) {
-            // Find intersection point
+            // Find intersection point where net worth crosses goal target
             let intersectionIndex = -1;
-            let intersectionFound = false;
-            
-            for (let i = 0; i < dataPoints.length - 1; i++) {
-                if (dataPoints[i] < goal.target && dataPoints[i + 1] >= goal.target) {
+            for (let i = 0; i < dataPoints.length; i++) {
+                if (dataPoints[i] >= goal.target) {
                     intersectionIndex = i;
-                    intersectionFound = true;
                     break;
                 }
             }
             
-            // If already achieved at start
-            if (dataPoints[0] >= goal.target) {
-                intersectionFound = true;
-                intersectionIndex = -1;
-            }
-            
-            // Create the goal line data
+            // Create custom line data
             const goalLineData = [];
-            
-            if (!intersectionFound) {
-                // Goal not achieved - show full horizontal line
-                goalLineData.push(...Array(labels.length).fill(goal.target));
-            } else if (intersectionIndex === -1) {
-                // Already achieved - no line needed
-                goalLineData.push(...Array(labels.length).fill(null));
-            } else {
-                // Create line that stops at intersection
-                for (let i = 0; i < labels.length; i++) {
-                    if (i <= intersectionIndex) {
-                        goalLineData.push(goal.target);
-                    } else {
-                        goalLineData.push(null);
-                    }
+            for (let i = 0; i < labels.length; i++) {
+                if (intersectionIndex === -1 || i < intersectionIndex) {
+                    // Horizontal line until intersection
+                    goalLineData.push(goal.target);
+                } else if (i === intersectionIndex) {
+                    // Still show the intersection point
+                    goalLineData.push(goal.target);
+                } else {
+                    // After intersection, drop to null (creates vertical effect)
+                    goalLineData.push(null);
                 }
             }
             
@@ -737,7 +722,7 @@ if (window.data.goals && window.data.goals.length > 0) {
             charts.progress.data.datasets.push({
                 label: goal.name || `Goal ${index + 1}`,
                 data: goalLineData,
-                borderColor: intersectionFound ? '#10d164' : '#dc3545', // Green if achieved, red if not
+                borderColor: `hsl(${index * 60}, 70%, 50%)`,
                 backgroundColor: 'transparent',
                 borderWidth: 2,
                 borderDash: [10, 5],
@@ -745,22 +730,35 @@ if (window.data.goals && window.data.goals.length > 0) {
                 tension: 0,
                 pointRadius: 0,
                 pointHoverRadius: 0,
-                spanGaps: false
+                spanGaps: false // Important: don't connect null values
             });
             
-            // Add achievement marker at intersection
-            if (intersectionFound && intersectionIndex >= 0) {
-                charts.progress.data.datasets.push({
-                    label: `${goal.name} Achieved`,
-                    data: labels.map((_, i) => i === intersectionIndex + 1 ? goal.target : null),
-                    borderColor: '#10d164',
-                    backgroundColor: '#10d164',
-                    borderWidth: 0,
-                    pointRadius: 8,
-                    pointHoverRadius: 10,
-                    showLine: false,
-                    pointStyle: 'star'
-                });
+            // Add vertical line at intersection if found
+            if (intersectionIndex > 0 && intersectionIndex < labels.length) {
+                // Create a separate dataset for the vertical line
+                const verticalLineData = new Array(labels.length).fill(null);
+                verticalLineData[intersectionIndex] = goal.target;
+                verticalLineData[intersectionIndex] = 0; // This creates a vertical line
+                
+                // Add annotation or custom drawing for vertical line
+                // Since Chart.js doesn't directly support vertical lines in line charts,
+                // we'll use a plugin to draw it
+                if (!charts.progress.options.plugins.annotation) {
+                    charts.progress.options.plugins.annotation = {
+                        annotations: {}
+                    };
+                }
+                
+                charts.progress.options.plugins.annotation.annotations[`goal${index}Line`] = {
+                    type: 'line',
+                    xMin: intersectionIndex,
+                    xMax: intersectionIndex,
+                    yMin: 0,
+                    yMax: goal.target,
+                    borderColor: `hsl(${index * 60}, 70%, 50%)`,
+                    borderWidth: 2,
+                    borderDash: [10, 5]
+                };
             }
         }
     });
