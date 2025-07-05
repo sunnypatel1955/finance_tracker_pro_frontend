@@ -661,17 +661,23 @@ function updateProgressChart() {
     for (let year = 1; year <= years; year++) {
         let yearEndValue = currentValue;
         
-        // Calculate growth for each month in the year
-        for (let month = 0; month < 12; month++) {
-            // Apply investment returns on current investments
-            const investmentGains = (yearEndValue - totalLoanValue) * monthlyReturnRate;
-            
-            // Apply loan interest
-            const loanCosts = totalLoanValue * monthlyInterestRate;
-            
-            // Add monthly savings
-            yearEndValue = yearEndValue + monthlySavings + investmentGains - loanCosts;
-        }
+       // Calculate growth for each month in the year
+for (let month = 0; month < 12; month++) {
+    // Add half of monthly savings at start (for mid-month average)
+    yearEndValue = yearEndValue + (monthlySavings / 2);
+    
+    // Apply investment returns
+    const investmentGains = (yearEndValue - totalLoanValue) * monthlyReturnRate;
+    
+    // Add remaining half of monthly savings
+    yearEndValue = yearEndValue + (monthlySavings / 2);
+    
+    // Apply loan interest
+    const loanCosts = totalLoanValue * monthlyInterestRate;
+    
+    // Apply costs
+    yearEndValue = yearEndValue + investmentGains - loanCosts;
+}
         
         currentValue = yearEndValue;
         dataPoints.push(Math.max(0, currentValue)); // Prevent negative values
