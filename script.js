@@ -866,7 +866,7 @@ async function ensureChartsRendered() {
                 
                 // Wait for next animation frame
                 requestAnimationFrame(() => {
-                    setTimeout(resolve, 150); // Slightly longer delay for complex charts
+                    setTimeout(resolve, 500); // Slightly longer delay for complex charts
                 });
             } catch (error) {
                 console.error('Error in ensureChartsRendered:', error);
