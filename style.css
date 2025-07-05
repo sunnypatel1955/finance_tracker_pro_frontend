@@ -1940,35 +1940,43 @@ body.enhanced::after {
     box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
 }
 
-/* healthGauge canvas */
+/* healthGauge */
+/* Health Gauge Container */
 #healthScoreGauge {
-    width: 200px;
-    height: 200px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 200px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto 1rem auto;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
+/* Health Gauge Canvas */
 #scoreGaugeCanvas {
-    width: 200px !important;
-    height: 200px !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
 }
 
 /* Health Score Values */
 #healthScoreValue {
     font-size: 3rem;
     font-weight: 700;
+    color: #fff;
 }
 
 #healthScoreGrade {
     font-size: 1.5rem;
     font-weight: 600;
+    color: #4caf50;
 }
 
 #healthScoreLabel {
     font-size: 0.95rem;
     margin-top: 0.3rem;
+    color: #888;
 }
 
 /* Score Breakdown */
@@ -1979,12 +1987,14 @@ body.enhanced::after {
 .score-item span {
     font-size: 0.95rem;
     font-weight: 500;
+    color: #e0e0e0;
 }
 
 .progress {
     height: 10px;
     border-radius: 5px;
     overflow: hidden;
+    background-color: #333;
 }
 
 .progress-bar {
@@ -2017,10 +2027,6 @@ body.enhanced::after {
 body {
     background-color: #121212;
     color: #e0e0e0;
-}
-
-body .progress {
-    background-color: #333;
 }
 
 body #healthScoreValue,
@@ -2062,16 +2068,13 @@ body.light-mode .score-item span {
 /* Responsive adjustments */
 @media (max-width: 767px) {
     #healthScoreGauge {
-        width: 160px;
-        height: 160px;
+        max-width: 160px;
     }
-    #scoreGaugeCanvas {
-        width: 160px !important;
-        height: 160px !important;
-    }
+
     #healthScoreValue {
         font-size: 2.5rem;
     }
+
     #healthScoreGrade {
         font-size: 1.2rem;
     }
