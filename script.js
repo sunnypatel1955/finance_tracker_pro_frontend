@@ -605,6 +605,7 @@ function exportToCSV() {
 }
 
 // Export to PDF
+// Export to PDF
 async function exportToPDF() {
     try {
         showLoadingState(true);
@@ -704,92 +705,106 @@ async function exportToPDF() {
             });
         }
 
-        // FIXED: Add charts with proper error handling and wait
-        if (window.charts) {
-            try {
-                // Ensure charts are rendered
-                await ensureChartsRendered();
-                // Update charts before capturing
-                if (typeof window.updateAllCharts === 'function') {
-                    window.updateAllCharts();
-                    // Wait for charts to render
-                    await new Promise(resolve => setTimeout(resolve, 300));
+        // CRITICAL FIX: Force chart rendering and capture
+        console.log('Starting chart export process...');
+        
+        // First, make sure charts exist and are visible
+        const chartElements = {
+            investment: document.getElementById('investmentChart'),
+            risk: document.getElementById('riskChart'),
+            progress: document.getElementById('progressChart'),
+            historical: document.getElementById('historicalChart')
+        };
+        
+        console.log('Chart elements found:', Object.keys(chartElements).filter(k => chartElements[k] !== null));
+        
+        // Force update all charts
+        if (typeof window.updateAllCharts === 'function') {
+            window.updateAllCharts();
+            await new Promise(resolve => setTimeout(resolve, 500)); // Longer wait
+        }
+        
+        // Try to capture charts
+        const chartImages = {};
+        
+        for (const [chartName, canvas] of Object.entries(chartElements)) {
+            if (canvas) {
+                try {
+                    // Method 1: Direct canvas capture
+                    const imageData = canvas.toDataURL('image/png', 1.0);
+                    if (imageData && imageData !== 'data:,') {
+                        chartImages[chartName] = imageData;
+                        console.log(`Successfully captured ${chartName} chart`);
+                    }
+                } catch (e) {
+                    console.error(`Failed to capture ${chartName} chart:`, e);
+                    
+                    // Method 2: Try through Chart.js instance
+                    if (window.charts && window.charts[chartName]) {
+                        try {
+                            const chart = window.charts[chartName];
+                            if (chart.toBase64Image) {
+                                chartImages[chartName] = chart.toBase64Image();
+                                console.log(`Successfully captured ${chartName} chart using Chart.js method`);
+                            }
+                        } catch (e2) {
+                            console.error(`Failed Chart.js capture for ${chartName}:`, e2);
+                        }
+                    }
                 }
-
+            }
+        }
+        
+        console.log('Charts captured:', Object.keys(chartImages));
+        
+        // Add charts to PDF if we have any
+        if (Object.keys(chartImages).length > 0) {
+            doc.addPage();
+            doc.setFontSize(16);
+            doc.setTextColor(0);
+            doc.text('Financial Charts', 20, 20);
+            
+            let chartY = 40;
+            
+            // Investment Chart
+            if (chartImages.investment) {
+                doc.addImage(chartImages.investment, 'PNG', 20, chartY, 80, 60);
+                doc.setFontSize(10);
+                doc.text('Investment Distribution', 60, chartY + 65, { align: 'center' });
+            }
+            
+            // Risk Chart
+            if (chartImages.risk) {
+                doc.addImage(chartImages.risk, 'PNG', 110, 40, 80, 60);
+                doc.setFontSize(10);
+                doc.text('Risk Analysis', 150, 105, { align: 'center' });
+            }
+            
+            // Progress Chart
+            if (chartImages.progress) {
                 doc.addPage();
                 doc.setFontSize(16);
-                doc.setTextColor(0);
-                doc.text('Financial Charts', 20, 20);
-
-                let chartY = 40;
-
-                // Investment Distribution Chart
-                if (window.charts.investment) {
-                    try {
-                        const investmentImage = getChartImage(window.charts.investment);
-                        if (investmentImage) {
-                            doc.addImage(investmentImage, 'PNG', 20, chartY, 80, 60);
-                            
-                            // Add chart title
-                            doc.setFontSize(10);
-                            doc.text('Investment Distribution', 60, chartY + 65, { align: 'center' });
-                        }
-                    } catch (chartError) {
-                        console.error('Error adding investment chart:', chartError);
-                    }
-                }
-
-                // Risk Distribution Chart
-                if (window.charts.risk) {
-                    try {
-                        const riskImage = getChartImage(window.charts.risk);
-                        if (riskImage) {
-                            doc.addImage(riskImage, 'PNG', 110, 40, 80, 60);
-                            
-                            // Add chart title
-                            doc.setFontSize(10);
-                            doc.text('Risk Analysis', 150, 105, { align: 'center' });
-                        }
-                    } catch (chartError) {
-                        console.error('Error adding risk chart:', chartError);
-                    }
-                }
-
-                // Progress Chart on new page
-                if (window.charts.progress) {
-                    doc.addPage();
-                    doc.setFontSize(16);
-                    doc.text('Net Worth Projection', 20, 20);
-                    
-                    try {
-                        const progressImage = getChartImage(window.charts.progress);
-                        if (progressImage) {
-                            doc.addImage(progressImage, 'PNG', 20, 35, 170, 100);
-                        }
-                    } catch (chartError) {
-                        console.error('Error adding progress chart:', chartError);
-                    }
-                }
-
-                // Historical Chart if available
-                if (window.charts.historical && window.historicalNetWorth && window.historicalNetWorth.length > 0) {
-                    doc.addPage();
-                    doc.setFontSize(16);
-                    doc.text('Historical Net Worth', 20, 20);
-                    
-                    try {
-                        const historicalImage = getChartImage(window.charts.historical);
-                        if (historicalImage) {
-                            doc.addImage(historicalImage, 'PNG', 20, 35, 170, 100);
-                        }
-                    } catch (chartError) {
-                        console.error('Error adding historical chart:', chartError);
-                    }
-                }
-            } catch (chartsError) {
-                console.error('Error processing charts for PDF:', chartsError);
-                // Continue with PDF generation even if charts fail
+                doc.text('Net Worth Projection', 20, 20);
+                doc.addImage(chartImages.progress, 'PNG', 20, 35, 170, 100);
             }
+            
+            // Historical Chart
+            if (chartImages.historical && window.historicalNetWorth && window.historicalNetWorth.length > 0) {
+                doc.addPage();
+                doc.setFontSize(16);
+                doc.text('Historical Net Worth', 20, 20);
+                doc.addImage(chartImages.historical, 'PNG', 20, 35, 170, 100);
+            }
+        } else {
+            console.warn('No charts were captured for PDF export');
+            
+            // Add a message in PDF
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.setTextColor(100);
+            doc.text('Charts could not be included in this export.', 20, 30);
+            doc.setFontSize(10);
+            doc.text('Please ensure charts are visible on screen before exporting.', 20, 40);
         }
 
         // Add summary statistics page
@@ -836,7 +851,7 @@ async function exportToPDF() {
         // Save PDF
         doc.save(`FinanceTracker_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 
-        showNotification('PDF report generated successfully with latest data', 'success');
+        showNotification('PDF report generated successfully', 'success');
         bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
 
     } catch (error) {
@@ -845,6 +860,56 @@ async function exportToPDF() {
     } finally {
         showLoadingState(false);
     }
+}
+
+// Debug function to check charts
+function debugChartsForPDF() {
+    console.log('=== Chart Debug for PDF Export ===');
+    
+    // Check chart elements
+    const elements = {
+        investment: document.getElementById('investmentChart'),
+        risk: document.getElementById('riskChart'),
+        progress: document.getElementById('progressChart'),
+        historical: document.getElementById('historicalChart')
+    };
+    
+    Object.entries(elements).forEach(([name, el]) => {
+        if (el) {
+            console.log(`${name} canvas:`, {
+                exists: true,
+                width: el.width,
+                height: el.height,
+                displayed: el.style.display !== 'none',
+                context: !!el.getContext('2d')
+            });
+            
+            // Try to get image
+            try {
+                const dataUrl = el.toDataURL();
+                console.log(`${name} can export:`, dataUrl.substring(0, 50) + '...');
+            } catch (e) {
+                console.error(`${name} export error:`, e.message);
+            }
+        } else {
+            console.log(`${name} canvas: NOT FOUND`);
+        }
+    });
+    
+    // Check Chart.js instances
+    if (window.charts) {
+        Object.entries(window.charts).forEach(([name, chart]) => {
+            console.log(`Chart.js ${name}:`, {
+                exists: !!chart,
+                hasCanvas: !!(chart && chart.canvas),
+                hasData: !!(chart && chart.data && chart.data.datasets)
+            });
+        });
+    } else {
+        console.log('window.charts not found');
+    }
+    
+    console.log('========================');
 }
 
 // Enhanced version with better error handling
@@ -1350,3 +1415,9 @@ window.showLoanCalculator = showLoanCalculator;
 window.showExpenseAnalysis = showExpenseAnalysis;
 window.showGoalPlanner = showGoalPlanner;
 window.handleFileImport = handleFileImport;
+// Add this to your script.js to debug
+window.debugChartsForPDF = debugChartsForPDF;
+window.debugChartsForPDF = debugChartsForPDF;
+window.formatCurrency = formatCurrency; // If not already exported elsewhere
+window.showLoadingState = showLoadingState; // If defined in your code
+window.checkAuth = checkAuth; // Useful for debugging auth issues
