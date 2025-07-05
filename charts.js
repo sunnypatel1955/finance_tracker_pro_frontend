@@ -685,124 +685,30 @@ for (let month = 0; month < 12; month++) {
     charts.progress.data.datasets[0].data = dataPoints;
     
 // Add goal lines if goals exist
-if (window.data.goals && window.data.goals.length > 0) {
-    // Remove existing goal datasets (keep only the main projection)
-    while (charts.progress.data.datasets.length > 1) {
-        charts.progress.data.datasets.pop();
-    }
-    
-    // Store intersection points for vertical lines
-    const intersectionPoints = [];
-    
-    // Add custom goal line for each goal
-    window.data.goals.forEach((goal, index) => {
-        if (goal.target && goal.target > 0) {
-            // Find intersection point where net worth crosses goal target
-            let intersectionIndex = -1;
-            for (let i = 0; i < dataPoints.length; i++) {
-                if (dataPoints[i] >= goal.target) {
-                    intersectionIndex = i;
-                    break;
-                }
-            }
-            
-            // Store intersection info for custom drawing
-            if (intersectionIndex > 0) {
-                intersectionPoints.push({
-                    index: intersectionIndex,
-                    target: goal.target,
-                    color: `hsl(${index * 60}, 70%, 50%)`,
-                    name: goal.name || `Goal ${index + 1}`
+    if (window.data.goals && window.data.goals.length > 0) {
+        // Remove existing goal datasets (keep only the main projection)
+        while (charts.progress.data.datasets.length > 1) {
+            charts.progress.data.datasets.pop();
+        }
+        
+        // Add a horizontal line for each goal
+        window.data.goals.forEach((goal, index) => {
+            if (goal.target && goal.target > 0) {
+                charts.progress.data.datasets.push({
+                    label: goal.name || `Goal ${index + 1}`,
+                    data: Array(labels.length).fill(goal.target),
+                    borderColor: `hsl(${index * 60}, 70%, 50%)`,
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [10, 5],
+                    fill: false,
+                    tension: 0,
+                    pointRadius: 0,
+                    pointHoverRadius: 0
                 });
-            }
-            
-            // Create horizontal line data (stops at intersection)
-            const goalLineData = [];
-            for (let i = 0; i < labels.length; i++) {
-                if (intersectionIndex === -1 || i <= intersectionIndex) {
-                    goalLineData.push(goal.target);
-                } else {
-                    goalLineData.push(null);
-                }
-            }
-            
-            // Add the horizontal line dataset
-            charts.progress.data.datasets.push({
-                label: goal.name || `Goal ${index + 1}`,
-                data: goalLineData,
-                borderColor: `hsl(${index * 60}, 70%, 50%)`,
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                borderDash: [10, 5],
-                fill: false,
-                tension: 0,
-                pointRadius: 0,
-                pointHoverRadius: 0,
-                spanGaps: false
-            });
-        }
-    });
-    
-    // Add custom plugin to draw vertical lines
-    charts.progress.options.plugins = charts.progress.options.plugins || {};
-    charts.progress.options.plugins.customGoalLines = {
-        id: 'customGoalLines',
-        afterDraw: (chart) => {
-            const ctx = chart.ctx;
-            const xAxis = chart.scales.x;
-            const yAxis = chart.scales.y;
-            
-            intersectionPoints.forEach(point => {
-                // Get pixel positions
-                const x = xAxis.getPixelForValue(point.index);
-                const yTop = yAxis.getPixelForValue(point.target);
-                const yBottom = yAxis.getPixelForValue(0);
-                
-                // Draw vertical line
-                ctx.save();
-                ctx.beginPath();
-                ctx.setLineDash([10, 5]);
-                ctx.strokeStyle = point.color;
-                ctx.lineWidth = 2;
-                ctx.moveTo(x, yTop);
-                ctx.lineTo(x, yBottom);
-                ctx.stroke();
-                ctx.restore();
-                
-                // Add achievement marker
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(x, yTop, 6, 0, 2 * Math.PI);
-                ctx.fillStyle = '#10d164';
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                ctx.restore();
-                
-                // Add label
-                ctx.save();
-                ctx.fillStyle = '#10d164';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('✓', x, yTop + 1);
-                ctx.restore();
-            });
-        }
-    };
-    
-     // Register the plugin if not already registered
-    if (!Chart.defaults.plugins.customGoalLines) {
-        Chart.register({
-            id: 'customGoalLines',
-            afterDraw: function(chart) {
-                if (chart.options.plugins && chart.options.plugins.customGoalLines) {
-                    chart.options.plugins.customGoalLines.afterDraw(chart);
-                }
             }
         });
     }
-}
     
     // Force chart update
     charts.progress.update('active');
