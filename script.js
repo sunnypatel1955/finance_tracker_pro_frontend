@@ -608,6 +608,13 @@ function exportToCSV() {
 async function exportToPDF() {
     try {
         showLoadingState(true);
+        
+        // IMPORTANT: Update data before generating PDF to get latest values
+        if (typeof window.update === 'function') {
+            window.update();
+            // Wait for update to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -621,25 +628,30 @@ async function exportToPDF() {
         doc.setTextColor(100);
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 30);
 
-        // Add overview
+        // Add overview with CURRENT data
         doc.setFontSize(16);
         doc.setTextColor(0);
         doc.text('Financial Overview', 20, 45);
 
         doc.setFontSize(12);
-        const netWorth = data.initial_cash + data.investments.reduce((sum, i) => sum + i.value, 0) - data.loans.reduce((sum, l) => sum + l.value, 0);
+        
+        // Use window.data to ensure we get the latest data
+        const currentCash = window.data.initial_cash || 0;
+        const currentInvestments = window.data.investments.reduce((sum, i) => sum + (i.value || 0), 0);
+        const currentLoans = window.data.loans.reduce((sum, l) => sum + (l.value || 0), 0);
+        const netWorth = currentCash + currentInvestments - currentLoans;
 
         let y = 55;
-        doc.text(`Liquid Cash: ${formatCurrency(data.initial_cash)}`, 20, y);
+        doc.text(`Liquid Cash: ${formatCurrency(currentCash)}`, 20, y);
         y += 8;
-        doc.text(`Total Investments: ${formatCurrency(data.investments.reduce((sum, i) => sum + i.value, 0))}`, 20, y);
+        doc.text(`Total Investments: ${formatCurrency(currentInvestments)}`, 20, y);
         y += 8;
-        doc.text(`Total Loans: ${formatCurrency(data.loans.reduce((sum, l) => sum + l.value, 0))}`, 20, y);
+        doc.text(`Total Loans: ${formatCurrency(currentLoans)}`, 20, y);
         y += 8;
         doc.setTextColor(102, 126, 234);
         doc.text(`Net Worth: ${formatCurrency(netWorth)}`, 20, y);
 
-        // Add monthly cash flow
+        // Add monthly cash flow with CURRENT data
         y += 15;
         doc.setFontSize(16);
         doc.setTextColor(0);
@@ -647,8 +659,8 @@ async function exportToPDF() {
 
         y += 10;
         doc.setFontSize(12);
-        const totalIncome = data.income.reduce((sum, i) => sum + i.value, 0);
-        const totalExpenses = data.expenses.reduce((sum, e) => sum + e.value, 0);
+        const totalIncome = window.data.income.reduce((sum, i) => sum + (i.value || 0), 0);
+        const totalExpenses = window.data.expenses.reduce((sum, e) => sum + (e.value || 0), 0);
         const savings = totalIncome - totalExpenses;
 
         doc.text(`Total Income: ${formatCurrency(totalIncome)}`, 20, y);
@@ -659,7 +671,7 @@ async function exportToPDF() {
         doc.text(`Net Savings: ${formatCurrency(savings)}`, 20, y);
 
         // Add investment summary if exists
-        if (data.investments.length > 0) {
+        if (window.data.investments.length > 0) {
             y += 15;
             doc.setFontSize(16);
             doc.setTextColor(0);
@@ -668,11 +680,11 @@ async function exportToPDF() {
             y += 10;
             doc.setFontSize(10);
 
-            const investmentData = data.investments.map(inv => [
-                inv.name,
-                formatCurrency(inv.value),
-                `${inv.return}%`,
-                inv.risk
+            const investmentData = window.data.investments.map(inv => [
+                inv.name || 'Unnamed',
+                formatCurrency(inv.value || 0),
+                `${inv.return || 0}%`,
+                inv.risk || 'medium'
             ]);
 
             doc.autoTable({
@@ -685,50 +697,142 @@ async function exportToPDF() {
             });
         }
 
-        // ✅ INSERT CHARTS INTO PDF BEFORE SAVING
+        // FIXED: Add charts with proper error handling and wait
         if (window.charts) {
-            doc.addPage();
-            doc.setFontSize(16);
-            doc.setTextColor(0);
-            doc.text('Financial Charts', 20, 20);
+            try {
+                // Update charts before capturing
+                if (typeof window.updateAllCharts === 'function') {
+                    window.updateAllCharts();
+                    // Wait for charts to render
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
 
-            let yPos = 40;
-
-            // Investment Distribution Chart
-            if (window.charts.investment) {
-                const investmentImage = window.charts.investment.toBase64Image();
-                doc.addImage(investmentImage, 'PNG', 20, yPos, 80, 60);
-                yPos += 70;
-            }
-
-            // Risk Distribution Chart
-            if (window.charts.risk) {
-                const riskImage = window.charts.risk.toBase64Image();
-                doc.addImage(riskImage, 'PNG', 110, 40, 80, 60);
-            }
-
-            // Progress Chart on new page
-            if (window.charts.progress) {
                 doc.addPage();
-                const progressImage = window.charts.progress.toBase64Image();
-                doc.addImage(progressImage, 'PNG', 20, 20, 170, 100);
+                doc.setFontSize(16);
+                doc.setTextColor(0);
+                doc.text('Financial Charts', 20, 20);
+
+                let chartY = 40;
+
+                // Investment Distribution Chart
+                if (window.charts.investment && window.charts.investment.canvas) {
+                    try {
+                        const investmentCanvas = window.charts.investment.canvas;
+                        const investmentImage = investmentCanvas.toDataURL('image/png', 1.0);
+                        doc.addImage(investmentImage, 'PNG', 20, chartY, 80, 60);
+                        
+                        // Add chart title
+                        doc.setFontSize(10);
+                        doc.text('Investment Distribution', 60, chartY + 65, { align: 'center' });
+                    } catch (chartError) {
+                        console.error('Error adding investment chart:', chartError);
+                    }
+                }
+
+                // Risk Distribution Chart
+                if (window.charts.risk && window.charts.risk.canvas) {
+                    try {
+                        const riskCanvas = window.charts.risk.canvas;
+                        const riskImage = riskCanvas.toDataURL('image/png', 1.0);
+                        doc.addImage(riskImage, 'PNG', 110, 40, 80, 60);
+                        
+                        // Add chart title
+                        doc.setFontSize(10);
+                        doc.text('Risk Analysis', 150, 105, { align: 'center' });
+                    } catch (chartError) {
+                        console.error('Error adding risk chart:', chartError);
+                    }
+                }
+
+                // Progress Chart on new page
+                if (window.charts.progress && window.charts.progress.canvas) {
+                    doc.addPage();
+                    doc.setFontSize(16);
+                    doc.text('Net Worth Projection', 20, 20);
+                    
+                    try {
+                        const progressCanvas = window.charts.progress.canvas;
+                        const progressImage = progressCanvas.toDataURL('image/png', 1.0);
+                        doc.addImage(progressImage, 'PNG', 20, 35, 170, 100);
+                    } catch (chartError) {
+                        console.error('Error adding progress chart:', chartError);
+                    }
+                }
+
+                // Historical Chart if available
+                if (window.charts.historical && window.charts.historical.canvas && window.historicalNetWorth && window.historicalNetWorth.length > 0) {
+                    doc.addPage();
+                    doc.setFontSize(16);
+                    doc.text('Historical Net Worth', 20, 20);
+                    
+                    try {
+                        const historicalCanvas = window.charts.historical.canvas;
+                        const historicalImage = historicalCanvas.toDataURL('image/png', 1.0);
+                        doc.addImage(historicalImage, 'PNG', 20, 35, 170, 100);
+                    } catch (chartError) {
+                        console.error('Error adding historical chart:', chartError);
+                    }
+                }
+            } catch (chartsError) {
+                console.error('Error processing charts for PDF:', chartsError);
+                // Continue with PDF generation even if charts fail
             }
         }
 
-        // ✅ SAVE PDF after adding everything
+        // Add summary statistics page
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.setTextColor(0);
+        doc.text('Summary Statistics', 20, 20);
+
+        let summaryY = 35;
+        doc.setFontSize(11);
+        
+        // Investment statistics
+        if (window.data.investments.length > 0) {
+            const avgReturn = window.data.investments.reduce((sum, i) => sum + (i.return || 0), 0) / window.data.investments.length;
+            doc.text(`Average Investment Return: ${avgReturn.toFixed(2)}%`, 20, summaryY);
+            summaryY += 8;
+            
+            const riskCounts = { low: 0, medium: 0, high: 0 };
+            window.data.investments.forEach(i => riskCounts[i.risk || 'medium']++);
+            doc.text(`Risk Profile: Low (${riskCounts.low}), Medium (${riskCounts.medium}), High (${riskCounts.high})`, 20, summaryY);
+            summaryY += 8;
+        }
+        
+        // Expense breakdown
+        if (window.data.expenses.length > 0) {
+            summaryY += 5;
+            doc.text('Top Expense Categories:', 20, summaryY);
+            summaryY += 8;
+            
+            const expenseByCategory = {};
+            window.data.expenses.forEach(e => {
+                expenseByCategory[e.category || 'Other'] = (expenseByCategory[e.category || 'Other'] || 0) + (e.value || 0);
+            });
+            
+            Object.entries(expenseByCategory)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .forEach(([category, amount]) => {
+                    doc.text(`  • ${category}: ${formatCurrency(amount)}`, 25, summaryY);
+                    summaryY += 6;
+                });
+        }
+
+        // Save PDF
         doc.save(`FinanceTracker_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 
-        showNotification('PDF report generated successfully', 'success');
+        showNotification('PDF report generated successfully with latest data', 'success');
         bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
 
     } catch (error) {
         console.error('Export to PDF failed:', error);
-        showNotification('Failed to generate PDF report', 'error');
+        showNotification('Failed to generate PDF report: ' + error.message, 'error');
     } finally {
         showLoadingState(false);
     }
 }
-
 
 // Export to JSON (backup)
 function exportToJSON() {
