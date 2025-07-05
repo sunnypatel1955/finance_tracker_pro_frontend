@@ -1941,31 +1941,42 @@ body.enhanced::after {
 }
 
 /* healthGauge */
+/* Health Score Container Layout */
+.health-score-container {
+  display: flex;
+  gap: var(--spacing);
+  padding: var(--spacing);
+}
+
 /* Health Score Gauge Container */
 #healthScoreGauge {
   width: 240px;
   height: 240px;
-  margin: 0 auto;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: visible;
   transition: var(--transition);
+  /* Add padding to ensure space for pseudo-element */
+  padding-top: 10px;
 }
 
 #healthScoreGauge::before {
   content: '';
   position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  background: var(--primary-gradient);
+  top: 0; /* Reset to 0 to avoid clipping */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--glass-bg);
   border-radius: 50%;
   opacity: 0.1;
   transition: var(--transition);
   z-index: -1;
+  /* Extend slightly beyond container with margin effect */
+  margin: -10px;
 }
 
 #healthScoreGauge:hover::before {
@@ -1981,7 +1992,7 @@ body.enhanced::after {
   object-fit: contain;
   display: block;
   transition: var(--transition);
-  filter: drop-shadow(0 4px 20px rgba(102, 126, 234, 0.3));
+  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.1));
 }
 
 #healthScoreGauge:hover #scoreGaugeCanvas {
@@ -1992,20 +2003,17 @@ body.enhanced::after {
 #healthScoreValue {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 800;
-  background: var(--primary-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary-color); /* Purple for 89 */
   text-align: center;
   line-height: 1.1;
   transition: var(--transition);
-  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
 }
 
 #healthScoreGrade {
   font-size: clamp(1.2rem, 3vw, 1.8rem);
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--success-color); /* Green for A */
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-top: 0.25rem;
@@ -2031,16 +2039,16 @@ body.enhanced::after {
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   transition: var(--transition);
+  flex: 1;
 }
 
 .score-breakdown:hover {
-  background: var(--glass-bg);
   transform: translateY(-2px);
-  box-shadow: var(--glass-shadow), 0 0 20px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--glass-shadow), 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
 .score-breakdown h5 {
-  color: var(--text-light);
+  color: var(--text-dark);
   font-weight: 700;
   font-size: 1.1rem;
   margin-bottom: 1rem;
@@ -2061,7 +2069,7 @@ body.enhanced::after {
 .score-item span {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-light);
+  color: var(--text-dark);
   display: block;
   margin-bottom: 0.5rem;
   transition: var(--transition);
@@ -2072,7 +2080,7 @@ body.enhanced::after {
   height: 8px;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: var(--bg-dark);
+  background: rgba(255, 255, 255, 0.2); /* Light glass effect */
   position: relative;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: var(--transition);
@@ -2109,27 +2117,27 @@ body.enhanced::after {
 
 /* Individual Progress Bar Colors */
 #savingsRateBar {
-  background: var(--success-gradient);
+  background: var(--success-color); /* Green */
   box-shadow: 0 2px 8px rgba(16, 209, 100, 0.4);
 }
 
 #debtRatioBar {
-  background: var(--info-gradient);
-  box-shadow: 0 2px 8px rgba(79, 172, 254, 0.4);
+  background: #17a2b8; /* Custom blue */
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.4);
 }
 
 #emergencyFundBar {
-  background: var(--warning-gradient);
-  box-shadow: 0 2px 8px rgba(255, 212, 59, 0.4);
+  background: #ffc107; /* Yellow */
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
 }
 
 #investmentDiversityBar {
-  background: var(--accent-gradient);
+  background: #4facfe; /* Light blue */
   box-shadow: 0 2px 8px rgba(79, 172, 254, 0.4);
 }
 
 #netWorthGrowthBar {
-  background: var(--danger-gradient);
+  background: var(--error-color); /* Red */
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
 }
 
@@ -2139,11 +2147,12 @@ body.enhanced::after {
 
 /* Light Mode Overrides */
 body.light-mode #healthScoreValue {
-  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.2); /* Softer shadow for light mode */
+  color: var(--primary-color);
+  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.1);
 }
 
 body.light-mode #healthScoreGrade {
-  color: var(--primary-color);
+  color: var(--success-color);
 }
 
 body.light-mode #healthScoreLabel {
@@ -2151,19 +2160,24 @@ body.light-mode #healthScoreLabel {
 }
 
 body.light-mode .score-breakdown h5 {
-  color: var(--text-light);
+  color: var(--text-dark);
 }
 
 body.light-mode .score-item span {
-  color: var(--text-light);
+  color: var(--text-dark);
 }
 
 body.light-mode .progress {
-  background: var(--bg-dark); /* Uses #f8fafc in light mode */
+  background: rgba(0, 0, 0, 0.1); /* Darker glass effect for light mode */
 }
 
 /* Responsive Adjustments */
 @media (max-width: 767px) {
+  .health-score-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
   #healthScoreGauge {
     width: 200px;
     height: 200px;
@@ -2177,6 +2191,7 @@ body.light-mode .progress {
   .score-breakdown {
     padding: calc(var(--spacing) * 0.75);
     margin: 0 0.5rem;
+    width: 100%;
   }
   
   .score-item {
