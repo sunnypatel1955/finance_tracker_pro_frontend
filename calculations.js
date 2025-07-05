@@ -515,6 +515,244 @@ function setupOptimizedEventListeners() {
         });
     });
 }
+function calculateFinancialHealthScore() {
+    console.log('calculateFinancialHealthScore function called');
+    
+    if (!window.data) return { score: 0, breakdown: {} };
+    
+    const scores = {
+        savingsRate: 0,
+        debtRatio: 0,
+        emergencyFund: 0,
+        investmentDiversity: 0,
+        netWorthGrowth: 0
+    };
+    
+    // 1. Savings Rate Score (20 points max)
+    const totalIncome = data.income.reduce((sum, i) => sum + (i.value || 0), 0);
+    const totalExpenses = data.expenses.reduce((sum, e) => sum + (e.value || 0), 0);
+    if (totalIncome > 0) {
+        const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
+        scores.savingsRate = Math.min(20, Math.max(0, savingsRate * 0.67)); // 30% savings = 20 points
+    }
+    
+    // 2. Debt-to-Income Ratio Score (20 points max)
+    const totalLoans = data.loans.reduce((sum, l) => sum + (l.value || 0), 0);
+    if (totalIncome > 0) {
+        const debtRatio = (totalLoans / (totalIncome * 12)) * 100; // Annual income
+        scores.debtRatio = Math.max(0, 20 - (debtRatio * 0.5)); // 0% debt = 20 points, 40% debt = 0 points
+    } else {
+        scores.debtRatio = totalLoans === 0 ? 20 : 0;
+    }
+    
+    // 3. Emergency Fund Score (20 points max)
+    const liquidCash = data.initial_cash || 0;
+    const monthlyExpenses = totalExpenses;
+    if (monthlyExpenses > 0) {
+        const emergencyMonths = liquidCash / monthlyExpenses;
+        scores.emergencyFund = Math.min(20, emergencyMonths * 3.33); // 6 months = 20 points
+    } else {
+        scores.emergencyFund = liquidCash > 0 ? 20 : 0;
+    }
+    
+    // 4. Investment Diversity Score (20 points max)
+    const investmentTypes = new Set(data.investments.map(i => i.name)).size;
+    const totalInvestments = data.investments.reduce((sum, i) => sum + (i.value || 0), 0);
+    if (totalInvestments > 0) {
+        scores.investmentDiversity = Math.min(20, investmentTypes * 4); // 5 types = 20 points
+    }
+    
+    // 5. Net Worth Growth Score (20 points max)
+    if (window.historicalNetWorth && window.historicalNetWorth.length >= 3) {
+        const recent = window.historicalNetWorth.slice(-3);
+        const oldestNetWorth = recent[0].netWorth;
+        const newestNetWorth = recent[recent.length - 1].netWorth;
+        if (oldestNetWorth > 0) {
+            const growthRate = ((newestNetWorth - oldestNetWorth) / oldestNetWorth) * 100;
+            scores.netWorthGrowth = Math.min(20, Math.max(0, growthRate * 2)); // 10% growth = 20 points
+        }
+    }
+    
+    const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
+    
+    return {
+        score: Math.round(totalScore),
+        breakdown: scores,
+        grade: getFinancialGrade(totalScore)
+    };
+}
+
+function getFinancialGrade(score) {
+    if (score >= 90) return { grade: 'A+', color: '#10d164', label: 'Excellent' };
+    if (score >= 80) return { grade: 'A', color: '#28a745', label: 'Very Good' };
+    if (score >= 70) return { grade: 'B', color: '#17a2b8', label: 'Good' };
+    if (score >= 60) return { grade: 'C', color: '#ffc107', label: 'Fair' };
+    if (score >= 50) return { grade: 'D', color: '#fd7e14', label: 'Poor' };
+    return { grade: 'F', color: '#dc3545', label: 'Needs Improvement' };
+}
+
+// Fixed calculateFinancialHealthScore function
+function calculateFinancialHealthScore() {
+    console.log('calculateFinancialHealthScore function called');
+    
+    if (!window.data) return { score: 0, breakdown: {}, grade: getFinancialGrade(0) };
+    
+    const scores = {
+        savingsRate: 0,
+        debtRatio: 0,
+        emergencyFund: 0,
+        investmentDiversity: 0,
+        netWorthGrowth: 0
+    };
+    
+    // 1. Savings Rate Score (20 points max)
+    const totalIncome = window.data.income.reduce((sum, i) => sum + (i.value || 0), 0);
+    const totalExpenses = window.data.expenses.reduce((sum, e) => sum + (e.value || 0), 0);
+    if (totalIncome > 0) {
+        const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
+        scores.savingsRate = Math.min(20, Math.max(0, savingsRate * 0.67)); // 30% savings = 20 points
+    }
+    
+    // 2. Debt-to-Income Ratio Score (20 points max)
+    const totalLoans = window.data.loans.reduce((sum, l) => sum + (l.value || 0), 0);
+    if (totalIncome > 0) {
+        const debtRatio = (totalLoans / (totalIncome * 12)) * 100; // Annual income
+        scores.debtRatio = Math.max(0, 20 - (debtRatio * 0.5)); // 0% debt = 20 points, 40% debt = 0 points
+    } else {
+        scores.debtRatio = totalLoans === 0 ? 20 : 0;
+    }
+    
+    // 3. Emergency Fund Score (20 points max)
+    const liquidCash = window.data.initial_cash || 0;
+    const monthlyExpenses = totalExpenses;
+    if (monthlyExpenses > 0) {
+        const emergencyMonths = liquidCash / monthlyExpenses;
+        scores.emergencyFund = Math.min(20, emergencyMonths * 3.33); // 6 months = 20 points
+    } else {
+        scores.emergencyFund = liquidCash > 0 ? 20 : 0;
+    }
+    
+    // 4. Investment Diversity Score (20 points max)
+    const investmentTypes = new Set(window.data.investments.map(i => i.name)).size;
+    const totalInvestments = window.data.investments.reduce((sum, i) => sum + (i.value || 0), 0);
+    if (totalInvestments > 0) {
+        scores.investmentDiversity = Math.min(20, investmentTypes * 4); // 5 types = 20 points
+    }
+    
+    // 5. Net Worth Growth Score (20 points max)
+    if (window.historicalNetWorth && window.historicalNetWorth.length >= 3) {
+        const recent = window.historicalNetWorth.slice(-3);
+        const oldestNetWorth = recent[0].netWorth;
+        const newestNetWorth = recent[recent.length - 1].netWorth;
+        if (oldestNetWorth > 0) {
+            const growthRate = ((newestNetWorth - oldestNetWorth) / oldestNetWorth) * 100;
+            scores.netWorthGrowth = Math.min(20, Math.max(0, growthRate * 2)); // 10% growth = 20 points
+        }
+    }
+    
+    const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
+    
+    return {
+        score: Math.round(totalScore),
+        breakdown: scores,
+        grade: getFinancialGrade(totalScore)
+    };
+}
+
+function getFinancialGrade(score) {
+    if (score >= 90) return { grade: 'A+', color: '#10d164', label: 'Excellent' };
+    if (score >= 80) return { grade: 'A', color: '#28a745', label: 'Very Good' };
+    if (score >= 70) return { grade: 'B', color: '#17a2b8', label: 'Good' };
+    if (score >= 60) return { grade: 'C', color: '#ffc107', label: 'Fair' };
+    if (score >= 50) return { grade: 'D', color: '#fd7e14', label: 'Poor' };
+    return { grade: 'F', color: '#dc3545', label: 'Needs Improvement' };
+}
+
+// Add this function to update the health score UI
+function updateFinancialHealthScore() {
+    console.log('updateFinancialHealthScore function called');
+    
+    const healthData = calculateFinancialHealthScore();
+    console.log('Health score calculated:', healthData);
+    
+    // Update main score display
+    const scoreElement = document.getElementById('healthScoreValue');
+    const gradeElement = document.getElementById('healthScoreGrade');
+    const labelElement = document.getElementById('healthScoreLabel');
+    
+    if (scoreElement) scoreElement.textContent = healthData.score;
+    if (gradeElement) {
+        gradeElement.textContent = healthData.grade.grade;
+        gradeElement.style.color = healthData.grade.color;
+    }
+    if (labelElement) {
+        labelElement.textContent = healthData.grade.label;
+        labelElement.style.color = healthData.grade.color;
+    }
+    
+    // Update breakdown bars
+    Object.entries(healthData.breakdown).forEach(([metric, score]) => {
+        const scoreElement = document.getElementById(`${metric}Score`);
+        const barElement = document.getElementById(`${metric}Bar`);
+        
+        if (scoreElement) scoreElement.textContent = `${Math.round(score)}/20`;
+        if (barElement) {
+            barElement.style.width = `${(score / 20) * 100}%`;
+            
+            // Color based on performance
+            if (score >= 15) barElement.className = 'progress-bar bg-success';
+            else if (score >= 10) barElement.className = 'progress-bar bg-warning';
+            else barElement.className = 'progress-bar bg-danger';
+        }
+    });
+    
+    // Draw gauge chart if canvas exists
+    drawHealthScoreGauge(healthData.score);
+}
+
+// Add this function to draw a gauge chart
+function drawHealthScoreGauge(score) {
+    const canvas = document.getElementById('scoreGaugeCanvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 80;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw background arc
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, Math.PI * 0.75, Math.PI * 2.25, false);
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.stroke();
+    
+    // Draw score arc
+    const scoreAngle = Math.PI * 0.75 + (score / 100) * Math.PI * 1.5;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, Math.PI * 0.75, scoreAngle, false);
+    ctx.lineWidth = 20;
+    
+    // Gradient based on score
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    if (score >= 80) {
+        gradient.addColorStop(0, '#10d164');
+        gradient.addColorStop(1, '#28a745');
+    } else if (score >= 60) {
+        gradient.addColorStop(0, '#ffc107');
+        gradient.addColorStop(1, '#fd7e14');
+    } else {
+        gradient.addColorStop(0, '#dc3545');
+        gradient.addColorStop(1, '#ff6b6b');
+    }
+    
+    ctx.strokeStyle = gradient;
+    ctx.stroke();
+}
+
 
 window.update = update;
 window.calculate = calculate;
@@ -528,3 +766,8 @@ window.stopAutoSave = stopAutoSave;
 window.showNotification = showNotification;
 window.cleanupResources = cleanupResources;
 window.setupOptimizedEventListeners = setupOptimizedEventListeners;
+// Add these to your existing global exports
+window.calculateFinancialHealthScore = calculateFinancialHealthScore;
+window.getFinancialGrade = getFinancialGrade;
+window.updateFinancialHealthScore = updateFinancialHealthScore;
+window.drawHealthScoreGauge = drawHealthScoreGauge;
