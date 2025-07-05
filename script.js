@@ -608,27 +608,27 @@ function exportToCSV() {
 async function exportToPDF() {
     try {
         showLoadingState(true);
-        
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
+
         // Add header
         doc.setFontSize(20);
         doc.setTextColor(102, 126, 234);
         doc.text('Finance Tracker Pro - Financial Report', 20, 20);
-        
+
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 30);
-        
+
         // Add overview
         doc.setFontSize(16);
         doc.setTextColor(0);
         doc.text('Financial Overview', 20, 45);
-        
+
         doc.setFontSize(12);
         const netWorth = data.initial_cash + data.investments.reduce((sum, i) => sum + i.value, 0) - data.loans.reduce((sum, l) => sum + l.value, 0);
-        
+
         let y = 55;
         doc.text(`Liquid Cash: ${formatCurrency(data.initial_cash)}`, 20, y);
         y += 8;
@@ -638,44 +638,43 @@ async function exportToPDF() {
         y += 8;
         doc.setTextColor(102, 126, 234);
         doc.text(`Net Worth: ${formatCurrency(netWorth)}`, 20, y);
-        
+
         // Add monthly cash flow
         y += 15;
         doc.setFontSize(16);
         doc.setTextColor(0);
         doc.text('Monthly Cash Flow', 20, y);
-        
+
         y += 10;
         doc.setFontSize(12);
         const totalIncome = data.income.reduce((sum, i) => sum + i.value, 0);
         const totalExpenses = data.expenses.reduce((sum, e) => sum + e.value, 0);
         const savings = totalIncome - totalExpenses;
-        
+
         doc.text(`Total Income: ${formatCurrency(totalIncome)}`, 20, y);
         y += 8;
         doc.text(`Total Expenses: ${formatCurrency(totalExpenses)}`, 20, y);
         y += 8;
         doc.setTextColor(savings >= 0 ? 34 : 220, savings >= 0 ? 197 : 53, savings >= 0 ? 94 : 69);
         doc.text(`Net Savings: ${formatCurrency(savings)}`, 20, y);
-        
+
         // Add investment summary if exists
         if (data.investments.length > 0) {
             y += 15;
             doc.setFontSize(16);
             doc.setTextColor(0);
             doc.text('Investment Portfolio', 20, y);
-            
+
             y += 10;
             doc.setFontSize(10);
-            
-            // Create simple table
+
             const investmentData = data.investments.map(inv => [
                 inv.name,
                 formatCurrency(inv.value),
                 `${inv.return}%`,
                 inv.risk
             ]);
-            
+
             doc.autoTable({
                 startY: y,
                 head: [['Investment', 'Value', 'Return', 'Risk']],
@@ -685,13 +684,43 @@ async function exportToPDF() {
                 margin: { left: 20, right: 20 }
             });
         }
-        
-        // Save PDF
+
+        // ✅ INSERT CHARTS INTO PDF BEFORE SAVING
+        if (window.charts) {
+            doc.addPage();
+            doc.setFontSize(16);
+            doc.setTextColor(0);
+            doc.text('Financial Charts', 20, 20);
+
+            let yPos = 40;
+
+            // Investment Distribution Chart
+            if (window.charts.investment) {
+                const investmentImage = window.charts.investment.toBase64Image();
+                doc.addImage(investmentImage, 'PNG', 20, yPos, 80, 60);
+                yPos += 70;
+            }
+
+            // Risk Distribution Chart
+            if (window.charts.risk) {
+                const riskImage = window.charts.risk.toBase64Image();
+                doc.addImage(riskImage, 'PNG', 110, 40, 80, 60);
+            }
+
+            // Progress Chart on new page
+            if (window.charts.progress) {
+                doc.addPage();
+                const progressImage = window.charts.progress.toBase64Image();
+                doc.addImage(progressImage, 'PNG', 20, 20, 170, 100);
+            }
+        }
+
+        // ✅ SAVE PDF after adding everything
         doc.save(`FinanceTracker_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-        
+
         showNotification('PDF report generated successfully', 'success');
         bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
-        
+
     } catch (error) {
         console.error('Export to PDF failed:', error);
         showNotification('Failed to generate PDF report', 'error');
@@ -699,6 +728,7 @@ async function exportToPDF() {
         showLoadingState(false);
     }
 }
+
 
 // Export to JSON (backup)
 function exportToJSON() {
