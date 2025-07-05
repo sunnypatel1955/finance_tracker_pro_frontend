@@ -691,6 +691,9 @@ if (window.data.goals && window.data.goals.length > 0) {
         charts.progress.data.datasets.pop();
     }
     
+    // Store intersection points for vertical lines
+    const intersectionPoints = [];
+    
     // Add custom goal line for each goal
     window.data.goals.forEach((goal, index) => {
         if (goal.target && goal.target > 0) {
@@ -703,22 +706,27 @@ if (window.data.goals && window.data.goals.length > 0) {
                 }
             }
             
-            // Create custom line data
+            // Store intersection info for custom drawing
+            if (intersectionIndex > 0) {
+                intersectionPoints.push({
+                    index: intersectionIndex,
+                    target: goal.target,
+                    color: `hsl(${index * 60}, 70%, 50%)`,
+                    name: goal.name || `Goal ${index + 1}`
+                });
+            }
+            
+            // Create horizontal line data (stops at intersection)
             const goalLineData = [];
             for (let i = 0; i < labels.length; i++) {
-                if (intersectionIndex === -1 || i < intersectionIndex) {
-                    // Horizontal line until intersection
-                    goalLineData.push(goal.target);
-                } else if (i === intersectionIndex) {
-                    // Still show the intersection point
+                if (intersectionIndex === -1 || i <= intersectionIndex) {
                     goalLineData.push(goal.target);
                 } else {
-                    // After intersection, drop to null (creates vertical effect)
                     goalLineData.push(null);
                 }
             }
             
-            // Add the goal dataset
+            // Add the horizontal line dataset
             charts.progress.data.datasets.push({
                 label: goal.name || `Goal ${index + 1}`,
                 data: goalLineData,
@@ -730,39 +738,61 @@ if (window.data.goals && window.data.goals.length > 0) {
                 tension: 0,
                 pointRadius: 0,
                 pointHoverRadius: 0,
-                spanGaps: false // Important: don't connect null values
+                spanGaps: false
             });
-            
-            // Add vertical line at intersection if found
-            if (intersectionIndex > 0 && intersectionIndex < labels.length) {
-                // Create a separate dataset for the vertical line
-                const verticalLineData = new Array(labels.length).fill(null);
-                verticalLineData[intersectionIndex] = goal.target;
-                verticalLineData[intersectionIndex] = 0; // This creates a vertical line
-                
-                // Add annotation or custom drawing for vertical line
-                // Since Chart.js doesn't directly support vertical lines in line charts,
-                // we'll use a plugin to draw it
-                if (!charts.progress.options.plugins.annotation) {
-                    charts.progress.options.plugins.annotation = {
-                        annotations: {}
-                    };
-                }
-                
-                charts.progress.options.plugins.annotation.annotations[`goal${index}Line`] = {
-                    type: 'line',
-                    xMin: intersectionIndex,
-                    xMax: intersectionIndex,
-                    yMin: 0,
-                    yMax: goal.target,
-                    borderColor: `hsl(${index * 60}, 70%, 50%)`,
-                    borderWidth: 2,
-                    borderDash: [10, 5]
-                };
-            }
         }
     });
-}
+    
+    // Add custom plugin to draw vertical lines
+    charts.progress.options.plugins = charts.progress.options.plugins || {};
+    charts.progress.options.plugins.customGoalLines = {
+        id: 'customGoalLines',
+        afterDraw: (chart) => {
+            const ctx = chart.ctx;
+            const xAxis = chart.scales.x;
+            const yAxis = chart.scales.y;
+            
+            intersectionPoints.forEach(point => {
+                // Get pixel positions
+                const x = xAxis.getPixelForValue(point.index);
+                const yTop = yAxis.getPixelForValue(point.target);
+                const yBottom = yAxis.getPixelForValue(0);
+                
+                // Draw vertical line
+                ctx.save();
+                ctx.beginPath();
+                ctx.setLineDash([10, 5]);
+                ctx.strokeStyle = point.color;
+                ctx.lineWidth = 2;
+                ctx.moveTo(x, yTop);
+                ctx.lineTo(x, yBottom);
+                ctx.stroke();
+                ctx.restore();
+                
+                // Add achievement marker
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(x, yTop, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = '#10d164';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+                
+                // Add label
+                ctx.save();
+                ctx.fillStyle = '#10d164';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('✓', x, yTop + 1);
+                ctx.restore();
+            });
+        }
+    };
+    
+    // Register the plugin if not already registered
+    if (!C
     
     // Force chart update
     charts.progress.update('active');
