@@ -520,82 +520,6 @@ function setupOptimizedEventListeners() {
         });
     });
 }
-function calculateFinancialHealthScore() {
-    console.log('calculateFinancialHealthScore function called');
-    
-    if (!window.data) return { score: 0, breakdown: {} };
-    
-    const scores = {
-        savingsRate: 0,
-        debtRatio: 0,
-        emergencyFund: 0,
-        investmentDiversity: 0,
-        netWorthGrowth: 0
-    };
-    
-    // 1. Savings Rate Score (20 points max)
-    const totalIncome = data.income.reduce((sum, i) => sum + (i.value || 0), 0);
-    const totalExpenses = data.expenses.reduce((sum, e) => sum + (e.value || 0), 0);
-    if (totalIncome > 0) {
-        const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
-        scores.savingsRate = Math.min(20, Math.max(0, savingsRate * 0.67)); // 30% savings = 20 points
-    }
-    
-    // 2. Debt-to-Income Ratio Score (20 points max)
-    const totalLoans = data.loans.reduce((sum, l) => sum + (l.value || 0), 0);
-    if (totalIncome > 0) {
-        const debtRatio = (totalLoans / (totalIncome * 12)) * 100; // Annual income
-        scores.debtRatio = Math.max(0, 20 - (debtRatio * 0.5)); // 0% debt = 20 points, 40% debt = 0 points
-    } else {
-        scores.debtRatio = totalLoans === 0 ? 20 : 0;
-    }
-    
-    // 3. Emergency Fund Score (20 points max)
-    const liquidCash = data.initial_cash || 0;
-    const monthlyExpenses = totalExpenses;
-    if (monthlyExpenses > 0) {
-        const emergencyMonths = liquidCash / monthlyExpenses;
-        scores.emergencyFund = Math.min(20, emergencyMonths * 3.33); // 6 months = 20 points
-    } else {
-        scores.emergencyFund = liquidCash > 0 ? 20 : 0;
-    }
-    
-    // 4. Investment Diversity Score (20 points max)
-    const investmentTypes = new Set(data.investments.map(i => i.name)).size;
-    const totalInvestments = data.investments.reduce((sum, i) => sum + (i.value || 0), 0);
-    if (totalInvestments > 0) {
-        scores.investmentDiversity = Math.min(20, investmentTypes * 4); // 5 types = 20 points
-    }
-    
-    // 5. Net Worth Growth Score (20 points max)
-    if (window.historicalNetWorth && window.historicalNetWorth.length >= 3) {
-        const recent = window.historicalNetWorth.slice(-3);
-        const oldestNetWorth = recent[0].netWorth;
-        const newestNetWorth = recent[recent.length - 1].netWorth;
-        if (oldestNetWorth > 0) {
-            const growthRate = ((newestNetWorth - oldestNetWorth) / oldestNetWorth) * 100;
-            scores.netWorthGrowth = Math.min(20, Math.max(0, growthRate * 2)); // 10% growth = 20 points
-        }
-    }
-    
-    const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
-    
-    return {
-        score: Math.round(totalScore),
-        breakdown: scores,
-        grade: getFinancialGrade(totalScore)
-    };
-}
-
-function getFinancialGrade(score) {
-    if (score >= 90) return { grade: 'A+', color: '#10d164', label: 'Excellent' };
-    if (score >= 80) return { grade: 'A', color: '#28a745', label: 'Very Good' };
-    if (score >= 70) return { grade: 'B', color: '#17a2b8', label: 'Good' };
-    if (score >= 60) return { grade: 'C', color: '#ffc107', label: 'Fair' };
-    if (score >= 50) return { grade: 'D', color: '#fd7e14', label: 'Poor' };
-    return { grade: 'F', color: '#dc3545', label: 'Needs Improvement' };
-}
-
 // Fixed calculateFinancialHealthScore function
 function calculateFinancialHealthScore() {
     console.log('calculateFinancialHealthScore function called');
@@ -673,7 +597,7 @@ function getFinancialGrade(score) {
     return { grade: 'F', color: '#dc3545', label: 'Needs Improvement' };
 }
 
-// Add this function to update the health score UI
+// Enhanced updateFinancialHealthScore function
 function updateFinancialHealthScore() {
     console.log('updateFinancialHealthScore function called');
     
@@ -715,34 +639,49 @@ function updateFinancialHealthScore() {
     drawHealthScoreGauge(healthData.score);
 }
 
-// Add this function to draw a gauge chart
+// Enhanced gauge drawing function with better visuals
 function drawHealthScoreGauge(score) {
     const canvas = document.getElementById('scoreGaugeCanvas');
     if (!canvas) return;
     
+    // Set canvas size
+    canvas.width = 240;
+    canvas.height = 240;
+    
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = 80;
+    const radius = 90;
     
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Draw outer ring shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 5;
+    
     // Draw background arc
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, Math.PI * 0.75, Math.PI * 2.25, false);
-    ctx.lineWidth = 20;
-    ctx.strokeStyle = '#e0e0e0';
+    ctx.lineWidth = 25;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.stroke();
+    
+    // Reset shadow for score arc
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
     
     // Draw score arc
     const scoreAngle = Math.PI * 0.75 + (score / 100) * Math.PI * 1.5;
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, Math.PI * 0.75, scoreAngle, false);
-    ctx.lineWidth = 20;
+    ctx.lineWidth = 25;
+    ctx.lineCap = 'round';
     
-    // Gradient based on score
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    // Create gradient based on score
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     if (score >= 80) {
         gradient.addColorStop(0, '#10d164');
         gradient.addColorStop(1, '#28a745');
@@ -756,8 +695,41 @@ function drawHealthScoreGauge(score) {
     
     ctx.strokeStyle = gradient;
     ctx.stroke();
+    
+    // Draw inner circle background
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius - 35, 0, Math.PI * 2, false);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fill();
+    
+    // Add tick marks
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(Math.PI * 0.75);
+    
+    for (let i = 0; i <= 10; i++) {
+        ctx.rotate((Math.PI * 1.5) / 10);
+        ctx.beginPath();
+        ctx.moveTo(radius - 35, 0);
+        ctx.lineTo(radius - 40, 0);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    ctx.restore();
+    
+    // Draw center score text
+    ctx.font = 'bold 48px Inter';
+    ctx.fillStyle = '#667eea';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(score, centerX, centerY - 10);
+    
+    // Draw "out of 100" text
+    ctx.font = '14px Inter';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillText('out of 100', centerX, centerY + 25);
 }
-
 
 window.update = update;
 window.calculate = calculate;
