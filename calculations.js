@@ -569,16 +569,25 @@ function calculateFinancialHealthScore() {
     }
     
     // 5. Net Worth Growth Score (20 points max)
-    if (window.historicalNetWorth && window.historicalNetWorth.length >= 3) {
-        const recent = window.historicalNetWorth.slice(-3);
-        const oldestNetWorth = recent[0].netWorth;
-        const newestNetWorth = recent[recent.length - 1].netWorth;
-        if (oldestNetWorth > 0) {
-            const growthRate = ((newestNetWorth - oldestNetWorth) / oldestNetWorth) * 100;
-            scores.netWorthGrowth = Math.min(20, Math.max(0, growthRate * 2)); // 10% growth = 20 points
-        }
+    // 5. Net Worth Growth Score (20 points max)
+if (window.historicalNetWorth && window.historicalNetWorth.length >= 3) {
+    const recent = window.historicalNetWorth.slice(-3);
+    const oldestNetWorth = recent[0].netWorth;
+    const newestNetWorth = recent[recent.length - 1].netWorth;
+    if (oldestNetWorth > 0) {
+        // Calculate monthly growth rate
+        const monthsSpan = recent.length - 1; // Should be 2 for 3 records
+        const totalGrowthRate = ((newestNetWorth - oldestNetWorth) / oldestNetWorth) * 100;
+        const monthlyGrowthRate = totalGrowthRate / monthsSpan;
+        
+        // More realistic scoring:
+        // 0% monthly = 0 points
+        // 1% monthly = 10 points (12% annual)
+        // 2% monthly = 18 points (24% annual)
+        // 2.5%+ monthly = 20 points (30%+ annual)
+        scores.netWorthGrowth = Math.min(20, Math.max(0, monthlyGrowthRate * 8));
     }
-    
+}
     const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
     
     return {
@@ -614,10 +623,12 @@ function updateFinancialHealthScore() {
         gradeElement.textContent = healthData.grade.grade;
         gradeElement.style.color = healthData.grade.color;
     }
-    if (labelElement) {
-        labelElement.textContent = healthData.grade.label;
-        labelElement.style.color = healthData.grade.color;
-    }
+if (labelElement) {
+    labelElement.textContent = healthData.grade.label;
+    // Use muted color instead of grade color for better visibility
+    labelElement.style.color = ''; // Clear inline style
+    labelElement.classList.add('text-muted'); // Use Bootstrap's text-muted class
+}
     
     // Update breakdown bars
     Object.entries(healthData.breakdown).forEach(([metric, score]) => {
