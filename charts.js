@@ -791,8 +791,18 @@ if (window.data.goals && window.data.goals.length > 0) {
         }
     };
     
-    // Register the plugin if not already registered
-    if (!C
+     // Register the plugin if not already registered
+    if (!Chart.defaults.plugins.customGoalLines) {
+        Chart.register({
+            id: 'customGoalLines',
+            afterDraw: function(chart) {
+                if (chart.options.plugins && chart.options.plugins.customGoalLines) {
+                    chart.options.plugins.customGoalLines.afterDraw(chart);
+                }
+            }
+        });
+    }
+}
     
     // Force chart update
     charts.progress.update('active');
