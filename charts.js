@@ -663,20 +663,16 @@ function updateProgressChart() {
         
        // Calculate growth for each month in the year
 for (let month = 0; month < 12; month++) {
-    // Add half of monthly savings at start (for mid-month average)
-    yearEndValue = yearEndValue + (monthlySavings / 2);
+    // Apply returns on existing amount
+    yearEndValue = yearEndValue * (1 + monthlyReturnRate);
     
-    // Apply investment returns
-    const investmentGains = (yearEndValue - totalLoanValue) * monthlyReturnRate;
+    // Add monthly savings (assumed to be invested mid-month, so gets half month's return)
+    const savingsWithHalfMonthReturn = monthlySavings * (1 + monthlyReturnRate * 0.5);
+    yearEndValue = yearEndValue + savingsWithHalfMonthReturn;
     
-    // Add remaining half of monthly savings
-    yearEndValue = yearEndValue + (monthlySavings / 2);
-    
-    // Apply loan interest
+    // Subtract loan costs if any
     const loanCosts = totalLoanValue * monthlyInterestRate;
-    
-    // Apply costs
-    yearEndValue = yearEndValue + investmentGains - loanCosts;
+    yearEndValue = yearEndValue - loanCosts;
 }
         
         currentValue = yearEndValue;
