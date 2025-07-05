@@ -2008,13 +2008,18 @@ body.enhanced::after {
   flex: 1;
 }
 
-.score-breakdown h5 {
-  color: var(--text-light);  /* Changed from --text-dark */
-  font-weight: 700;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+/* Specific targeting with all styles in one place */
+#healthScoreCollapse .col-lg-8 h5 {
+    color: var(--text-light) !important;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;  /* Note: you had 1rem, but 1.5rem gives better spacing */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+body.light-mode #healthScoreCollapse .col-lg-8 h5 {
+    color: var(--text-dark) !important;
 }
 
 /* Score Items */
@@ -2090,11 +2095,6 @@ body.enhanced::after {
 
 .progress-bar.bg-primary {
   background: #667eea !important;
-}
-
-/* Light Mode Adjustments */
-body.light-mode .score-breakdown h5 {
-  color: var(--text-dark);
 }
 
 body.light-mode .score-item span {
