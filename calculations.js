@@ -625,9 +625,8 @@ function updateFinancialHealthScore() {
     }
 if (labelElement) {
     labelElement.textContent = healthData.grade.label;
-    // Use muted color instead of grade color for better visibility
-    labelElement.style.color = ''; // Clear inline style
-    labelElement.classList.add('text-muted'); // Use Bootstrap's text-muted class
+    // Use a neutral gray that works in both themes
+    labelElement.style.color = '#9ca3af';
 }
     
     // Update breakdown bars
