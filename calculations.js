@@ -624,9 +624,8 @@ function updateFinancialHealthScore() {
         gradeElement.style.color = healthData.grade.color;
     }
 if (labelElement) {
-    labelElement.textContent = healthData.grade.label;
-    // Use a neutral gray that works in both themes
-    labelElement.style.color = '#9ca3af';
+    labelElement.textContent = healthData.grade.label;  // Keep the text as is
+    labelElement.setAttribute('style', 'color: #94a3b8 !important;');  // Change the COLOR to a neutral gray
 }
     
     // Update breakdown bars
