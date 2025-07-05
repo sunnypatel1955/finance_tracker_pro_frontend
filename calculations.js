@@ -76,6 +76,11 @@ function update() {
     }
     
     performCalculations();
+
+    // Add this at the end of your update() function
+    if (typeof window.updateFinancialHealthScore === 'function') {
+        window.updateFinancialHealthScore();
+    }
     
     if (typeof window.updateAllCharts === 'function') {
         window.updateAllCharts();
