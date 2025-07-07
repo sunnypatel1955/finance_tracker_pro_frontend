@@ -786,6 +786,13 @@
                 margin: 0 auto 3rem;
             }
         }
+        
+        @media (min-width: 641px) {
+    .auth-container::-webkit-scrollbar-track {
+        margin: 20px 0; /* Add margin only on desktop to keep scrollbar away from edges */
+    }
+}
+
 
         @media (max-width: 640px) {
             .main-container {
