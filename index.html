@@ -259,7 +259,9 @@
             padding: 2rem;
             box-shadow: var(--glass-shadow);
             position: relative;
-            overflow: hidden;
+            overflow-y: auto; /* Enable vertical scrolling */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            scroll-behavior: smooth;
             max-width: 480px;
             width: 100%;
             margin: 0 auto;
@@ -304,6 +306,25 @@
             color: var(--text-muted);
             font-size: 0.95rem;
         }
+        /* Custom scrollbar for auth containers */
+.auth-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.auth-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.auth-container::-webkit-scrollbar-thumb {
+    background: var(--primary-gradient);
+    border-radius: 3px;
+}
+
+.auth-container::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-gradient);
+}
+
 
         /* Form styling */
         .form-group {
