@@ -2143,19 +2143,14 @@ body.light-mode .score-item .progress {
 
 /* Calculate button tooltip */
 .calculate-tooltip {
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 15px;
+    position: fixed;
     background: var(--primary-color);
     color: white;
-    padding: 12px 16px;
+    padding: 15px 20px;
     border-radius: 8px;
-    font-size: 14px;
-    white-space: nowrap;
-    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     animation: slideIn 0.3s ease-out;
+    max-width: 250px;
 }
 
 .tooltip-arrow {
@@ -2168,6 +2163,16 @@ body.light-mode .score-item .progress {
     border-top: 8px solid transparent;
     border-bottom: 8px solid transparent;
     border-right: 8px solid var(--primary-color);
+}
+
+.tooltip-content h6 {
+    color: white !important;
+    font-weight: 600;
+}
+
+.tooltip-content p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    line-height: 1.4;
 }
 
 @keyframes slideIn {
@@ -2183,4 +2188,18 @@ body.light-mode .score-item .progress {
 
 .pulse-animation {
     animation: pulse 2s infinite;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    }
 }
