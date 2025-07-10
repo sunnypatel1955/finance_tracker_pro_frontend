@@ -1402,7 +1402,7 @@ function checkFirstTimeUser() {
     
     if (hasData && !hasCalculated) {
         // Show tooltip pointing to calculate button
-        const calculateBtn = document.getElementById('calculateBtn');
+        const calculateBtn = document.querySelector('button[onclick*="window.calculate"]');
         
         if (!calculateBtn) {
             console.error('Calculate button not found');
