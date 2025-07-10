@@ -1390,11 +1390,6 @@ function cleanupResources() {
     }
 }
 
-// Global error handler
-window.addEventListener('error', function(event) {
-    console.error('Global error:', event.error);
-    showNotification('An unexpected error occurred', 'error');
-});
 // 9. Add cleanup on page unload
 window.addEventListener('beforeunload', cleanupResources);
 window.addEventListener('unload', cleanupResources);
