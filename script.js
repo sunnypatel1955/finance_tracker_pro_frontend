@@ -1404,34 +1404,60 @@ function checkFirstTimeUser() {
         // Show tooltip pointing to calculate button
         const calculateBtn = document.getElementById('calculateBtn');
         
+        if (!calculateBtn) {
+            console.error('Calculate button not found');
+            return;
+        }
+        
         // Create tooltip
         const tooltip = document.createElement('div');
         tooltip.className = 'calculate-tooltip';
         tooltip.innerHTML = `
             <div class="tooltip-arrow"></div>
             <div class="tooltip-content">
-                <h6>Get Started!</h6>
-                <p>Click here to calculate and view your financial charts</p>
+                <h6 style="margin: 0 0 5px 0; font-size: 16px;">Get Started!</h6>
+                <p style="margin: 0; font-size: 13px;">Click here to calculate and view your financial charts</p>
             </div>
         `;
         
-        calculateBtn.parentElement.appendChild(tooltip);
+        // Add tooltip to body and position it
+        document.body.appendChild(tooltip);
+        
+        // Position tooltip next to button
+        const btnRect = calculateBtn.getBoundingClientRect();
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = `${btnRect.right + 15}px`;
+        tooltip.style.top = `${btnRect.top + (btnRect.height / 2)}px`;
+        tooltip.style.transform = 'translateY(-50%)';
+        tooltip.style.zIndex = '9999';
+        
+        // Add pulse animation to button
         calculateBtn.classList.add('pulse-animation');
         
-        // Auto-calculate after 3 seconds if user doesn't click
+        // Remove tooltip when calculate is clicked
+        calculateBtn.addEventListener('click', function() {
+            tooltip.remove();
+            this.classList.remove('pulse-animation');
+            localStorage.setItem('hasCalculated', 'true');
+        });
+        
+        // Auto-calculate after 5 seconds if user doesn't click
         setTimeout(() => {
             if (!localStorage.getItem('hasCalculated')) {
                 window.update();
                 tooltip.remove();
                 calculateBtn.classList.remove('pulse-animation');
+                localStorage.setItem('hasCalculated', 'true');
                 showNotification('Charts populated with your financial data!', 'success');
             }
-        }, 3000);
+        }, 5000);
     }
 }
 
-// Call on page load
-document.addEventListener('DOMContentLoaded', checkFirstTimeUser);
+// Call on page load - with delay to ensure DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(checkFirstTimeUser, 1000);
+});
 
 // Global error handler
 window.addEventListener('error', function(event) {
