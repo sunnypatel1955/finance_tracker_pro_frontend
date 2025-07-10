@@ -1389,6 +1389,50 @@ function cleanupResources() {
         }
     }
 }
+
+// Add to script.js
+function checkFirstTimeUser() {
+    const hasData = window.data && (
+        window.data.investments.length > 0 || 
+        window.data.income.length > 0 || 
+        window.data.expenses.length > 0
+    );
+    
+    const hasCalculated = localStorage.getItem('hasCalculated');
+    
+    if (hasData && !hasCalculated) {
+        // Show tooltip pointing to calculate button
+        const calculateBtn = document.getElementById('calculateBtn');
+        
+        // Create tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'calculate-tooltip';
+        tooltip.innerHTML = `
+            <div class="tooltip-arrow"></div>
+            <div class="tooltip-content">
+                <h6>Get Started!</h6>
+                <p>Click here to calculate and view your financial charts</p>
+            </div>
+        `;
+        
+        calculateBtn.parentElement.appendChild(tooltip);
+        calculateBtn.classList.add('pulse-animation');
+        
+        // Auto-calculate after 3 seconds if user doesn't click
+        setTimeout(() => {
+            if (!localStorage.getItem('hasCalculated')) {
+                window.update();
+                tooltip.remove();
+                calculateBtn.classList.remove('pulse-animation');
+                showNotification('Charts populated with your financial data!', 'success');
+            }
+        }, 3000);
+    }
+}
+
+// Call on page load
+document.addEventListener('DOMContentLoaded', checkFirstTimeUser);
+
 // Global error handler
 window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
