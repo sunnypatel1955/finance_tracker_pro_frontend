@@ -1391,23 +1391,21 @@ function cleanupResources() {
 }
 
 // Add to script.js
-function checkFirstTimeUser() {
+function showCalculateTooltip() { // Rename it too since it's no longer checking first-time users
+    const calculateBtn = document.querySelector('button[onclick*="window.calculate"]');
+    
+    if (!calculateBtn) {
+        console.error('Calculate button not found');
+        return;
+    }
+    
     const hasData = window.data && (
         window.data.investments.length > 0 || 
         window.data.income.length > 0 || 
         window.data.expenses.length > 0
     );
     
-    const hasCalculated = localStorage.getItem('hasCalculated');
-    
-    if (hasData && !hasCalculated) {
-        // Show tooltip pointing to calculate button
-        const calculateBtn = document.querySelector('button[onclick*="window.calculate"]');
-        
-        if (!calculateBtn) {
-            console.error('Calculate button not found');
-            return;
-        }
+    if (!hasData) return; // Only show if there's data to calculate
         
         // Create tooltip
         const tooltip = document.createElement('div');
@@ -1456,7 +1454,7 @@ function checkFirstTimeUser() {
 
 // Call on page load - with delay to ensure DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(checkFirstTimeUser, 1000);
+    setTimeout(showCalculateTooltip, 1000);
 });
 
 // Global error handler
